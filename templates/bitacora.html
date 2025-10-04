@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card p-3">
+  <div class="d-flex flex-wrap gap-2 align-items-end">
+    <div><label class="form-label mb-1">Fecha</label><input type="date" class="form-control form-control-sm"></div>
+    <div><label class="form-label mb-1">Usuario</label>
+      <select class="form-select form-select-sm"><option>Todos</option><option>mlopez</option><option>jdiaz</option></select>
+    </div>
+    <div><label class="form-label mb-1">Acción</label>
+      <select class="form-select form-select-sm"><option>Todos</option><option>VALIDAR_PAGO</option><option>ANULAR_PAGO</option><option>ALERTA_DIF</option></select>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm">PDF</button>
+      <button class="btn btn-outline-secondary btn-sm">Excel</button>
+    </div>
+  </div>
+  <hr>
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Fecha/Hora</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>IP</th><th>Justificación</th></tr></thead>
+      <tbody>
+        <tr><td>10:15:22</td><td>mlopez</td><td class="text-success">VALIDAR_PAGO</td><td>#P-00123</td><td>10.0.0.12</td><td>-</td></tr>
+        <tr><td>10:13:01</td><td>jdiaz</td><td class="text-danger">ANULAR_PAGO</td><td>#P-00120</td><td>10.0.0.21</td><td>Doble imputación</td></tr>
+        <tr><td>09:58:10</td><td class="text-muted">sistema</td><td class="text-warning">ALERTA_DIF</td><td>D2-045</td><td>—</td><td>Dif $2.200</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

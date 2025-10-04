@@ -1,0 +1,4 @@
+/* Suave realce de cards y listas */
+.card { border-radius: 14px; }
+.list-group-item { border-left: 0; border-right: 0; }
+.progress { height: 18px; }

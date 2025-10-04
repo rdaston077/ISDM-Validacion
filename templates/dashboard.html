@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- KPIs -->
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted">Incidencias abiertas</div>
+          <div class="fs-2 fw-bold">7</div>
+          <small class="text-danger"><i class="bi bi-arrow-up-right"></i> +2 vs ayer</small>
+        </div>
+        <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted">Firmas pendientes</div>
+          <div class="fs-2 fw-bold">3</div>
+          <small class="text-muted"><i class="bi bi-dash"></i> igual que ayer</small>
+        </div>
+        <i class="bi bi-pen fs-1 text-info"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted">Último arqueo</div>
+          <div class="fs-2 fw-bold text-success">OK</div>
+          <small class="text-success"><i class="bi bi-check2"></i> conciliado</small>
+        </div>
+        <i class="bi bi-check2-circle fs-1 text-success"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted">Pagos hoy</div>
+          <div class="fs-2 fw-bold">124</div>
+          <small class="text-success"><i class="bi bi-arrow-down-right"></i> -5% comisiones</small>
+        </div>
+        <i class="bi bi-cash-coin fs-1 text-primary"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <!-- Alertas y pendientes -->
+  <div class="col-lg-7">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Alertas recientes</h6>
+        <a href="/conciliacion/" class="small text-decoration-none">Ir a Conciliación</a>
+      </div>
+      <hr class="my-2">
+      <div class="list-group list-group-flush">
+        <a class="list-group-item d-flex justify-content-between align-items-center">
+          <div><span class="badge text-bg-warning me-2">DIF_MONTO</span>Dif $2.200 en MacroClick</div>
+          <small class="text-muted">Hoy 10:12</small>
+        </a>
+        <a class="list-group-item d-flex justify-content-between align-items-center">
+          <div><span class="badge text-bg-danger me-2">SIN_MATCH</span>Transferencia sin match</div>
+          <small class="text-muted">Ayer 18:40</small>
+        </a>
+        <a class="list-group-item d-flex justify-content-between align-items-center">
+          <div><span class="badge text-bg-info me-2">DUPLICADO</span>Pago duplicado</div>
+          <small class="text-muted">Ayer 17:05</small>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card p-3 h-100">
+      <h6 class="mb-1">Pendientes de firma</h6>
+      <hr class="my-2">
+      <ul class="list-unstyled small mb-3">
+        <li class="d-flex justify-content-between"><span>#P-00131 · Anulación</span><span class="badge text-bg-secondary">Solicitada</span></li>
+        <li class="d-flex justify-content-between"><span>#P-00129 · Monto alto</span><span class="badge text-bg-secondary">Solicitada</span></li>
+        <li class="d-flex justify-content-between"><span>#P-00127 · Ajuste</span><span class="badge text-bg-secondary">Solicitada</span></li>
+      </ul>
+      <div class="d-grid gap-2">
+        <a class="btn btn-primary" href="/conciliacion/"><i class="bi bi-diagram-2 me-1"></i> Conciliar & Arqueo</a>
+        <a class="btn btn-outline-primary" href="/bitacora/"><i class="bi bi-journal-text me-1"></i> Ver Bitácora</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estado de conciliación de hoy -->
+<div class="card p-3 mt-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Conciliación de hoy</h6>
+    <small class="text-muted">Corte 12:00</small>
+  </div>
+  <hr class="my-2">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="small text-muted mb-1">Match Sistema vs Externo</div>
+      <div class="progress" role="progressbar" aria-label="match">
+        <div class="progress-bar bg-success" style="width: 82%">82%</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="small text-muted mb-1">Diferencias (D2)</div>
+      <div class="progress" role="progressbar" aria-label="diferencias">
+        <div class="progress-bar bg-warning text-dark" style="width: 12%">12%</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="small text-muted mb-1">Sin match</div>
+      <div class="progress" role="progressbar" aria-label="sin-match">
+        <div class="progress-bar bg-danger" style="width: 6%">6%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Actividad reciente (mini bitácora) -->
+<div class="card p-3 mt-3">
+  <div class="d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Actividad reciente</h6>
+    <a href="/bitacora/" class="small text-decoration-none">Ver todo</a>
+  </div>
+  <hr class="my-2">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead>
+        <tr><th>Fecha/Hora</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>Justificación</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>10:15:22</td><td>Monica Lopez</td><td class="text-success">VALIDAR_PAGO</td><td>#P-00123</td><td>-</td></tr>
+        <tr><td>10:13:01</td><td>Juan Diaz</td><td class="text-danger">ANULAR_PAGO</td><td>#P-00120</td><td>Doble imputación</td></tr>
+        <tr><td>09:58:10</td><td class="text-muted">Sistema</td><td class="text-warning">ALERTA_DIF</td><td>D2-045</td><td>Dif $2.200</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
