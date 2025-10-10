@@ -1,29 +1,176 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card p-3">
-  <div class="d-flex flex-wrap gap-2 align-items-end">
-    <div><label class="form-label mb-1">Fecha</label><input type="date" class="form-control form-control-sm"></div>
-    <div><label class="form-label mb-1">Usuario</label>
-      <select class="form-select form-select-sm"><option>Todos</option><option>mlopez</option><option>jdiaz</option></select>
-    </div>
-    <div><label class="form-label mb-1">Acción</label>
-      <select class="form-select form-select-sm"><option>Todos</option><option>VALIDAR_PAGO</option><option>ANULAR_PAGO</option><option>ALERTA_DIF</option></select>
-    </div>
-    <div class="ms-auto d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm">PDF</button>
-      <button class="btn btn-outline-secondary btn-sm">Excel</button>
+
+<!-- Filtros (sticky) -->
+<div class="position-sticky top-0" style="z-index: 2;">
+  <div class="card p-3 mb-3">
+    <form class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label mb-1">Rango de fechas</label>
+        <div class="d-flex gap-2">
+          <input type="date" class="form-control form-control-sm" name="desde">
+          <input type="date" class="form-control form-control-sm" name="hasta">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label mb-1">Usuario</label>
+        <select class="form-select form-select-sm" name="usuario">
+          <option value="">Todos</option>
+          <option>Monica Lopez</option>
+          <option>Juan Diaz</option>
+          <option>sistema</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label mb-1">Acción</label>
+        <select class="form-select form-select-sm" name="accion">
+          <option value="">Todas</option>
+          <option>VALIDAR_PAGO</option>
+          <option>ANULAR_PAGO</option>
+          <option>ALERTA_DIF</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Texto libre</label>
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" name="q" placeholder="Buscar en justificación, ref, IP...">
+          <button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+        </div>
+      </div>
+      <div class="col-md-2 d-flex gap-2 justify-content-end">
+        <button type="button" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-pdf me-1"></i> PDF</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-xls me-1"></i> Excel</button>
+      </div>
+    </form>
+    <!-- Píldoras de estado -->
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <span class="pill">Total: <strong>128</strong></span>
+      <span class="pill">Validaciones: <strong>64</strong></span>
+      <span class="pill">Anulaciones: <strong>12</strong></span>
+      <span class="pill">Alertas: <strong>8</strong></span>
     </div>
   </div>
-  <hr>
+</div>
+
+<!-- Tabla -->
+<div class="card">
   <div class="table-responsive">
-    <table class="table align-middle">
-      <thead><tr><th>Fecha/Hora</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>IP</th><th>Justificación</th></tr></thead>
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 150px;">Fecha/Hora</th>
+          <th style="width: 140px;">Usuario</th>
+          <th style="width: 160px;">Acción</th>
+          <th>Objeto</th>
+          <th style="width: 140px;">IP</th>
+          <th>Justificación</th>
+          <th style="width: 1%;"></th>
+        </tr>
+      </thead>
       <tbody>
-        <tr><td>10:15:22</td><td>mlopez</td><td class="text-success">VALIDAR_PAGO</td><td>#P-00123</td><td>10.0.0.12</td><td>-</td></tr>
-        <tr><td>10:13:01</td><td>jdiaz</td><td class="text-danger">ANULAR_PAGO</td><td>#P-00120</td><td>10.0.0.21</td><td>Doble imputación</td></tr>
-        <tr><td>09:58:10</td><td class="text-muted">sistema</td><td class="text-warning">ALERTA_DIF</td><td>D2-045</td><td>—</td><td>Dif $2.200</td></tr>
+        <!-- Ejemplo de filas (puedes reemplazar por un loop Django) -->
+        <!-- {% for log in logs %} -->
+        <tr class="row-hover" data-bs-toggle="modal" data-bs-target="#detalleModal" onclick="setDetalle('#P-00123','VALIDAR_PAGO','mlopez','10:15:22','-')">
+          <td><i class="bi bi-clock-history me-1 text-muted"></i>10:15:22</td>
+          <td><i class="bi bi-person me-1 text-muted"></i>mlopez</td>
+          <td><span class="badge text-bg-success"><i class="bi bi-check2-circle me-1"></i>VALIDAR_PAGO</span></td>
+          <td>#P-00123</td>
+          <td>10.0.0.12</td>
+          <td class="text-muted">-</td>
+          <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i></button></td>
+        </tr>
+
+        <tr class="row-hover" data-bs-toggle="modal" data-bs-target="#detalleModal" onclick="setDetalle('#P-00120','ANULAR_PAGO','jdiaz','10:13:01','Doble imputación')">
+          <td><i class="bi bi-clock-history me-1 text-muted"></i>10:13:01</td>
+          <td><i class="bi bi-person me-1 text-muted"></i>jdiaz</td>
+          <td><span class="badge text-bg-danger"><i class="bi bi-x-octagon me-1"></i>ANULAR_PAGO</span></td>
+          <td>#P-00120</td>
+          <td>10.0.0.21</td>
+          <td>“Doble imputación”</td>
+          <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i></button></td>
+        </tr>
+
+        <tr class="row-hover" data-bs-toggle="modal" data-bs-target="#detalleModal" onclick="setDetalle('D2-045','ALERTA_DIF','sistema','09:58:10','Dif $2.200')">
+          <td><i class="bi bi-clock-history me-1 text-muted"></i>09:58:10</td>
+          <td><span class="text-muted"><i class="bi bi-cpu me-1"></i>sistema</span></td>
+          <td><span class="badge text-bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>ALERTA_DIF</span></td>
+          <td>D2-045</td>
+          <td>—</td>
+          <td>Dif $2.200</td>
+          <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i></button></td>
+        </tr>
+        <!-- {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-5">
+            <i class="bi bi-journal-text fs-3 text-muted d-block mb-2"></i>
+            <span class="text-muted">No se encontraron registros con esos filtros.</span>
+          </td>
+        </tr>
+        {% endfor %} -->
       </tbody>
     </table>
   </div>
+
+  <!-- Paginación (maqueta) -->
+  <div class="d-flex justify-content-between align-items-center p-3">
+    <small class="text-muted">Mostrando 1–20 de 128</small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item disabled"><a class="page-link">«</a></li>
+        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item"><a class="page-link" href="#">»</a></li>
+      </ul>
+    </nav>
+  </div>
 </div>
+
+<!-- Modal detalle -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-journal-text me-1"></i>Detalle de acción</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card p-2">
+              <h6 class="mb-1">Datos</h6><hr class="my-2">
+              <div class="small">
+                <div>Objeto: <strong id="d_obj">#P-XXXX</strong></div>
+                <div>Acción: <strong id="d_accion">VALIDAR_PAGO</strong></div>
+                <div>Usuario: <strong id="d_user">mlopez</strong></div>
+                <div>Fecha/Hora: <strong id="d_fecha">10:15:22</strong></div>
+                <div>IP: <strong id="d_ip">10.0.0.12</strong></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-2">
+              <h6 class="mb-1">Justificación</h6><hr class="my-2">
+              <p class="small mb-0" id="d_just">-</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card p-2">
+              <h6 class="mb-1">Acciones</h6><hr class="my-2">
+              <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-primary btn-sm"><i class="bi bi-download me-1"></i> Exportar</button>
+                <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-clipboard-check me-1"></i> Copiar detalle</button>
+                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-flag me-1"></i> Crear incidencia (D2)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

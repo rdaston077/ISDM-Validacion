@@ -2,3 +2,14 @@
 .card { border-radius: 14px; }
 .list-group-item { border-left: 0; border-right: 0; }
 .progress { height: 18px; }
+/* Bitácora */
+.pill {
+  border-radius: 999px;
+  padding: .25rem .6rem;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  font-size: .9rem;
+}
+.row-hover { transition: background .15s ease; }
+.row-hover:hover { background: #fafafa; cursor: pointer; }
+.table thead th { background:#fafafa; }
