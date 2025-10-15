@@ -1,47 +1,112 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card p-3">
-  <div class="row g-2 align-items-end">
-    <div class="col-md-3"><label class="form-label mb-1">Fecha</label><input type="date" class="form-control form-control-sm"></div>
-    <div class="col-md-3"><label class="form-label mb-1">Pasarela</label>
-      <select class="form-select form-select-sm"><option>MacroClick</option><option>Pago Fácil</option><option>Banco Nación</option></select>
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label mb-1">Fecha</label>
+      <input type="date" class="form-control form-control-sm" name="fecha" value="{{ filtros.fecha }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label mb-1">Pasarela</label>
+      <select class="form-select form-select-sm" name="pasarela">
+        <option value="MacroClick" {% if filtros.pasarela == 'MacroClick' %}selected{% endif %}>MacroClick</option>
+        <option value="Pago Fácil" {% if filtros.pasarela == 'Pago Fácil' %}selected{% endif %}>Pago Fácil</option>
+        <option value="Banco Nación" {% if filtros.pasarela == 'Banco Nación' %}selected{% endif %}>Banco Nación</option>
+      </select>
     </div>
     <div class="col-md-4">
       <label class="form-label mb-1">Reporte externo</label>
       <div class="input-group input-group-sm">
         <input type="text" class="form-control" placeholder="extracto_banco.csv" disabled>
-        <button class="btn btn-outline-secondary">Subir</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalSubirArchivo">Subir</button>
       </div>
     </div>
-    <div class="col-md-2 text-end"><button class="btn btn-primary btn-sm">Conciliar</button></div>
-  </div>
+    <div class="col-md-2 text-end">
+      <button type="submit" class="btn btn-primary btn-sm">Conciliar</button>
+    </div>
+  </form>
+  
   <hr>
+  
   <div class="row g-3">
+    <!-- Columna Sistema -->
     <div class="col-lg-6">
       <div class="card p-2 h-100">
-        <div class="d-flex justify-content-between align-items-center"><h6 class="mb-0">Sistema (interno)</h6><span class="badge text-bg-success">3 OK</span></div>
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Sistema (interno)</h6>
+          <span class="badge text-bg-success">{{ pagos_ok }} OK</span>
+        </div>
         <div class="table-responsive mt-2">
           <table class="table table-sm align-middle">
-            <thead><tr><th>Ref</th><th>Monto</th><th>Medio</th><th>Estado</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Ref</th>
+                <th>Monto</th>
+                <th>Medio</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><td>#P-00120</td><td>$10.000</td><td>Tarjeta</td><td><span class="badge text-bg-success">OK</span></td></tr>
-              <tr><td>#P-00121</td><td>$9.800</td><td>Tarjeta</td><td><span class="badge text-bg-warning">DIF</span></td></tr>
-              <tr><td>#P-00122</td><td>$8.000</td><td>Transf.</td><td><span class="badge text-bg-danger">SIN MATCH</span></td></tr>
+              {% for pago in pagos_sistema %}
+              <tr>
+                <td>{{ pago.referencia }}</td>
+                <td>${{ pago.monto }}</td>
+                <td>{{ pago.metodo_pago }}</td>
+                <td>
+                  {% if pago.estado_conciliacion == 'OK' %}
+                  <span class="badge text-bg-success">OK</span>
+                  {% elif pago.estado_conciliacion == 'DIF' %}
+                  <span class="badge text-bg-warning">DIF</span>
+                  {% else %}
+                  <span class="badge text-bg-danger">SIN MATCH</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">No hay pagos para conciliar</td>
+              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
     </div>
+    
+    <!-- Columna Externo -->
     <div class="col-lg-6">
       <div class="card p-2 h-100">
-        <div class="d-flex justify-content-between align-items-center"><h6 class="mb-0">Reporte externo</h6><span class="badge text-bg-secondary">3 registros</span></div>
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Reporte externo</h6>
+          <span class="badge text-bg-secondary">{{ datos_externos|length }} registros</span>
+        </div>
         <div class="table-responsive mt-2">
           <table class="table table-sm align-middle">
-            <thead><tr><th>Ref</th><th>Monto</th><th>Origen</th><th>Estado</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Ref</th>
+                <th>Monto</th>
+                <th>Origen</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><td>#P-00120</td><td>$10.000</td><td>Tarjeta</td><td><span class="badge text-bg-success">OK</span></td></tr>
-              <tr><td>#P-00121</td><td>$10.000</td><td>Tarjeta</td><td><span class="badge text-bg-warning">DIF</span></td></tr>
-              <tr><td>—</td><td>—</td><td>—</td><td><span class="badge text-bg-danger">SIN MATCH</span></td></tr>
+              {% for externo in datos_externos %}
+              <tr>
+                <td>{{ externo.referencia|default:"—" }}</td>
+                <td>{% if externo.monto %}${{ externo.monto }}{% else %}—{% endif %}</td>
+                <td>{{ externo.origen|default:"—" }}</td>
+                <td>
+                  {% if externo.estado == 'OK' %}
+                  <span class="badge text-bg-success">OK</span>
+                  {% elif externo.estado == 'DIF' %}
+                  <span class="badge text-bg-warning">DIF</span>
+                  {% else %}
+                  <span class="badge text-bg-danger">SIN MATCH</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -50,10 +115,46 @@
   </div>
 
   <div class="d-flex justify-content-between align-items-center mt-3">
-    <div><span class="badge bg-warning-subtle text-warning border me-2">DIF</span><small>Se detectaron diferencias. Genere incidencias.</small></div>
+    <div>
+      <span class="badge bg-warning-subtle text-warning border me-2">DIF</span>
+      <small>
+        {% if pagos_dif or pagos_sin_match %}
+        Se detectaron diferencias. Genere incidencias.
+        {% else %}
+        No se detectaron diferencias.
+        {% endif %}
+      </small>
+    </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm">Generar incidencias</button>
+      <form method="post" action="{% url 'generar_incidencias' %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-secondary btn-sm" {% if not pagos_dif and not pagos_sin_match %}disabled{% endif %}>
+          Generar incidencias
+        </button>
+      </form>
       <button class="btn btn-success btn-sm">Generar Arqueo Diario</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para subir archivo -->
+<div class="modal fade" id="modalSubirArchivo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Subir Reporte Externo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'subir_reporte_externo' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Seleccionar archivo CSV</label>
+            <input type="file" class="form-control" name="archivo" accept=".csv" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Subir</button>
+        </form>
+      </div>
     </div>
   </div>
 </div>

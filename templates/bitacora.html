@@ -1,176 +1,286 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Filtros (sticky) -->
-<div class="position-sticky top-0" style="z-index: 2;">
-  <div class="card p-3 mb-3">
-    <form class="row g-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label mb-1">Rango de fechas</label>
-        <div class="d-flex gap-2">
-          <input type="date" class="form-control form-control-sm" name="desde">
-          <input type="date" class="form-control form-control-sm" name="hasta">
+<div class="row">
+    <div class="col-12">
+        <!-- Header con Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ total_registros }}</h4>
+                                <p class="mb-0">Total Registros</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-database fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ validaciones }}</h4>
+                                <p class="mb-0">Validaciones</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ anulaciones }}</h4>
+                                <p class="mb-0">Anulaciones</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-ban fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ alertas }}</h4>
+                                <p class="mb-0">Alertas</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-exclamation-triangle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label mb-1">Usuario</label>
-        <select class="form-select form-select-sm" name="usuario">
-          <option value="">Todos</option>
-          <option>Monica Lopez</option>
-          <option>Juan Diaz</option>
-          <option>sistema</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label mb-1">Acción</label>
-        <select class="form-select form-select-sm" name="accion">
-          <option value="">Todas</option>
-          <option>VALIDAR_PAGO</option>
-          <option>ANULAR_PAGO</option>
-          <option>ALERTA_DIF</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label mb-1">Texto libre</label>
-        <div class="input-group input-group-sm">
-          <input type="text" class="form-control" name="q" placeholder="Buscar en justificación, ref, IP...">
-          <button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-funnel me-2"></i>Filtros de Búsqueda
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="desde" class="form-label">Desde</label>
+                        <input type="date" class="form-control" id="desde" name="desde" value="{{ filtros.desde }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="hasta" class="form-label">Hasta</label>
+                        <input type="date" class="form-control" id="hasta" name="hasta" value="{{ filtros.hasta }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="usuario" class="form-label">Usuario</label>
+                        <select class="form-select" id="usuario" name="usuario">
+                            <option value="Todos">Todos los usuarios</option>
+                            {% for usuario in usuarios %}
+                                <option value="{{ usuario.username }}" {% if filtros.usuario == usuario.username %}selected{% endif %}>
+                                    {{ usuario.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="accion" class="form-label">Acción</label>
+                        <select class="form-select" id="accion" name="accion">
+                            <option value="Todas">Todas las acciones</option>
+                            {% for accion in acciones %}
+                                <option value="{{ accion.nombre }}" {% if filtros.accion == accion.nombre %}selected{% endif %}>
+                                    {{ accion.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="q" class="form-label">Búsqueda</label>
+                        <input type="text" class="form-control" id="q" name="q" placeholder="Texto libre..." value="{{ filtros.texto }}">
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Buscar
+                            </button>
+                            <a href="{% url 'bitacora' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                            </a>
+                            
+                            <!-- Botones de Exportación -->
+                            <div class="btn-group">
+                                <a href="{% url 'exportar_bitacora_pdf' %}?desde={{ filtros.desde }}&hasta={{ filtros.hasta }}&usuario={{ filtros.usuario }}&accion={{ filtros.accion }}&q={{ filtros.texto }}" 
+                                   class="btn btn-success" target="_blank">
+                                    <i class="bi bi-file-pdf me-1"></i>PDF
+                                </a>
+                                <a href="{% url 'exportar_bitacora_excel' %}?desde={{ filtros.desde }}&hasta={{ filtros.hasta }}&usuario={{ filtros.usuario }}&accion={{ filtros.accion }}&q={{ filtros.texto }}" 
+                                   class="btn btn-success" target="_blank">
+                                    <i class="bi bi-file-spreadsheet me-1"></i>Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
-      <div class="col-md-2 d-flex gap-2 justify-content-end">
-        <button type="button" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-pdf me-1"></i> PDF</button>
-        <button type="button" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-xls me-1"></i> Excel</button>
-      </div>
-    </form>
-    <!-- Píldoras de estado -->
-    <div class="d-flex flex-wrap gap-2 mt-2">
-      <span class="pill">Total: <strong>128</strong></span>
-      <span class="pill">Validaciones: <strong>64</strong></span>
-      <span class="pill">Anulaciones: <strong>12</strong></span>
-      <span class="pill">Alertas: <strong>8</strong></span>
+
+        <!-- Tabla de Resultados CORREGIDA -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list me-2"></i>Registros de Bitácora
+                </h5>
+                <span class="badge bg-primary">Total: {{ total_registros }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Objeto</th>
+                                <th>Observación</th>
+                                <th>Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bitacora in bitacoras %}
+                            <tr>
+                                <td style="white-space: nowrap;">
+                                    <small>{{ bitacora.fecha_hora }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ bitacora.usuario }}</span>
+                                </td>
+                                <td>
+                                    {% if "VALIDAR" in bitacora.accion %}
+                                        <span class="badge bg-success">{{ bitacora.accion }}</span>
+                                    {% elif "ANULAR" in bitacora.accion %}
+                                        <span class="badge bg-danger">{{ bitacora.accion }}</span>
+                                    {% elif "ALERTA" in bitacora.accion %}
+                                        <span class="badge bg-warning text-dark">{{ bitacora.accion }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ bitacora.accion }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ bitacora.objeto }}</td>
+                                <td>
+                                    <small>{{ bitacora.observacion|default:"-" }}</small>
+                                </td>
+                                <td>
+                                    <code>{{ bitacora.registro_afectado|default:"-" }}</code>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="bi bi-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No se encontraron registros con los filtros aplicados</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginación -->
+        {% if bitacoras.has_other_pages %}
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <p class="text-muted mb-0">
+                    Mostrando {{ bitacoras.start_index }} - {{ bitacoras.end_index }} de {{ total_registros }} registros
+                </p>
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if bitacoras.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?pagina=1{% for key,value in request.GET.items %}{% if key != 'pagina' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?pagina={{ bitacoras.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'pagina' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for i in bitacoras.paginator.page_range %}
+                        {% if bitacoras.number == i %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                        {% elif i > bitacoras.number|add:'-3' and i < bitacoras.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?pagina={{ i }}{% for key,value in request.GET.items %}{% if key != 'pagina' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if bitacoras.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?pagina={{ bitacoras.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'pagina' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?pagina={{ bitacoras.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'pagina' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
-  </div>
 </div>
 
-<!-- Tabla -->
-<div class="card">
-  <div class="table-responsive">
-    <table class="table align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th style="width: 150px;">Fecha/Hora</th>
-          <th style="width: 140px;">Usuario</th>
-          <th style="width: 160px;">Acción</th>
-          <th>Objeto</th>
-          <th style="width: 140px;">IP</th>
-          <th>Justificación</th>
-          <th style="width: 1%;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Ejemplo de filas (puedes reemplazar por un loop Django) -->
-        <!-- {% for log in logs %} -->
-        <tr class="row-hover" data-bs-toggle="modal" data-bs-target="#detalleModal" onclick="setDetalle('#P-00123','VALIDAR_PAGO','mlopez','10:15:22','-')">
-          <td><i class="bi bi-clock-history me-1 text-muted"></i>10:15:22</td>
-          <td><i class="bi bi-person me-1 text-muted"></i>mlopez</td>
-          <td><span class="badge text-bg-success"><i class="bi bi-check2-circle me-1"></i>VALIDAR_PAGO</span></td>
-          <td>#P-00123</td>
-          <td>10.0.0.12</td>
-          <td class="text-muted">-</td>
-          <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i></button></td>
-        </tr>
+<script>
+    // Auto-submit form cuando cambien algunos filtros
+    document.addEventListener('DOMContentLoaded', function() {
+        const autoSubmitElements = document.querySelectorAll('#usuario, #accion');
+        autoSubmitElements.forEach(element => {
+            element.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
+    });
+</script>
 
-        <tr class="row-hover" data-bs-toggle="modal" data-bs-target="#detalleModal" onclick="setDetalle('#P-00120','ANULAR_PAGO','jdiaz','10:13:01','Doble imputación')">
-          <td><i class="bi bi-clock-history me-1 text-muted"></i>10:13:01</td>
-          <td><i class="bi bi-person me-1 text-muted"></i>jdiaz</td>
-          <td><span class="badge text-bg-danger"><i class="bi bi-x-octagon me-1"></i>ANULAR_PAGO</span></td>
-          <td>#P-00120</td>
-          <td>10.0.0.21</td>
-          <td>“Doble imputación”</td>
-          <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i></button></td>
-        </tr>
+<style>
+/* Corregir colores de texto */
+.card-title,
+.form-label,
+.table-dark th {
+    color: #212529 !important; /* Color oscuro para buen contraste */
+}
 
-        <tr class="row-hover" data-bs-toggle="modal" data-bs-target="#detalleModal" onclick="setDetalle('D2-045','ALERTA_DIF','sistema','09:58:10','Dif $2.200')">
-          <td><i class="bi bi-clock-history me-1 text-muted"></i>09:58:10</td>
-          <td><span class="text-muted"><i class="bi bi-cpu me-1"></i>sistema</span></td>
-          <td><span class="badge text-bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>ALERTA_DIF</span></td>
-          <td>D2-045</td>
-          <td>—</td>
-          <td>Dif $2.200</td>
-          <td><button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-up-right"></i></button></td>
-        </tr>
-        <!-- {% empty %}
-        <tr>
-          <td colspan="7" class="text-center py-5">
-            <i class="bi bi-journal-text fs-3 text-muted d-block mb-2"></i>
-            <span class="text-muted">No se encontraron registros con esos filtros.</span>
-          </td>
-        </tr>
-        {% endfor %} -->
-      </tbody>
-    </table>
-  </div>
+/* Asegurar que el texto sea visible */
+.text-muted {
+    color: #6c757d !important;
+}
 
-  <!-- Paginación (maqueta) -->
-  <div class="d-flex justify-content-between align-items-center p-3">
-    <small class="text-muted">Mostrando 1–20 de 128</small>
-    <nav>
-      <ul class="pagination pagination-sm mb-0">
-        <li class="page-item disabled"><a class="page-link">«</a></li>
-        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-        <li class="page-item"><a class="page-link" href="#">3</a></li>
-        <li class="page-item"><a class="page-link" href="#">»</a></li>
-      </ul>
-    </nav>
-  </div>
-</div>
-
-<!-- Modal detalle -->
-<div class="modal fade" id="detalleModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-journal-text me-1"></i>Detalle de acción</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="card p-2">
-              <h6 class="mb-1">Datos</h6><hr class="my-2">
-              <div class="small">
-                <div>Objeto: <strong id="d_obj">#P-XXXX</strong></div>
-                <div>Acción: <strong id="d_accion">VALIDAR_PAGO</strong></div>
-                <div>Usuario: <strong id="d_user">mlopez</strong></div>
-                <div>Fecha/Hora: <strong id="d_fecha">10:15:22</strong></div>
-                <div>IP: <strong id="d_ip">10.0.0.12</strong></div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card p-2">
-              <h6 class="mb-1">Justificación</h6><hr class="my-2">
-              <p class="small mb-0" id="d_just">-</p>
-            </div>
-          </div>
-          <div class="col-12">
-            <div class="card p-2">
-              <h6 class="mb-1">Acciones</h6><hr class="my-2">
-              <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-outline-primary btn-sm"><i class="bi bi-download me-1"></i> Exportar</button>
-                <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-clipboard-check me-1"></i> Copiar detalle</button>
-                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-flag me-1"></i> Crear incidencia (D2)</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
+.badge {
+    color: white !important;
+}
+</style>
 
 {% endblock %}

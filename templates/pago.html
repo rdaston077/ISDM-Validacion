@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">
+                <i class="bi bi-credit-card me-2"></i>Gestión de Pagos
+            </h4>
+            <a href="{% url 'lista_pagos' %}" class="btn btn-outline-primary">
+                <i class="bi bi-list me-1"></i>Ver Lista de Pagos
+            </a>
+        </div>
+
+        <!-- Formulario de Pago CON RELACIONES -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0 text-dark">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Pago
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <!-- Referencia -->
+                        <div class="col-md-6">
+                            <label for="referencia" class="form-label">Referencia *</label>
+                            <input type="text" class="form-control" id="referencia" name="referencia" 
+                                   placeholder="Ej: #P-00131" value="{{ form.referencia.value|default:'' }}" required>
+                            <div class="form-text">Formato: #P-XXXXX</div>
+                        </div>
+
+                        <!-- Monto -->
+                        <div class="col-md-6">
+                            <label for="monto" class="form-label">Monto *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="monto" name="monto" 
+                                       step="0.01" min="0" value="{{ form.monto.value|default:'' }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Fecha Pago -->
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha Pago *</label>
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" 
+                                           value="{{ form.fecha_pago.value|default:'' }}" required>
+                                </div>
+                                <div class="col-4">
+                                    <input type="time" class="form-control" id="hora_pago" name="hora_pago" 
+                                           value="{{ form.hora_pago.value|default:'' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fecha Vencimiento -->
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha Vencimiento *</label>
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento" 
+                                           value="{{ form.fecha_vencimiento.value|default:'' }}" required>
+                                </div>
+                                <div class="col-4">
+                                    <input type="time" class="form-control" id="hora_vencimiento" name="hora_vencimiento" 
+                                           value="{{ form.hora_vencimiento.value|default:'' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="col-md-6">
+                            <label for="estado" class="form-label">Estado *</label>
+                            <select class="form-select" id="estado" name="estado" required>
+                                <option value="">Seleccionar estado...</option>
+                                {% for value, label in form.fields.estado.choices %}
+                                    <option value="{{ value }}" {% if form.estado.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Método de Pago -->
+                        <div class="col-md-6">
+                            <label for="metodo_pago" class="form-label">Método de Pago *</label>
+                            <select class="form-select" id="metodo_pago" name="metodo_pago" required>
+                                <option value="">Seleccionar método...</option>
+                                {% for value, label in form.fields.metodo_pago.choices %}
+                                    <option value="{{ value }}" {% if form.metodo_pago.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Comisión Porcentaje -->
+                        <div class="col-md-6">
+                            <label for="comision_porcentaje" class="form-label">Comisión Porcentaje</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="comision_porcentaje" name="comision_porcentaje" 
+                                       step="0.01" min="0" max="100" value="{{ form.comision_porcentaje.value|default:'0' }}">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <!-- Estudiante Nombre -->
+                        <div class="col-md-6">
+                            <label for="estudiante_nombre" class="form-label">Estudiante Nombre *</label>
+                            <input type="text" class="form-control" id="estudiante_nombre" name="estudiante_nombre" 
+                                   value="{{ form.estudiante_nombre.value|default:'' }}" required>
+                        </div>
+
+                        <!-- Concepto -->
+                        <div class="col-12">
+                            <label for="concepto" class="form-label">Concepto *</label>
+                            <input type="text" class="form-control" id="concepto" name="concepto" 
+                                   value="{{ form.concepto.value|default:'' }}" required>
+                        </div>
+
+                        <!-- Comprobante -->
+                        <div class="col-12">
+                            <label for="comprobante" class="form-label">Comprobante</label>
+                            <input type="file" class="form-control" id="comprobante" name="comprobante" 
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                            <div class="form-text">Formatos: PDF, JPG, PNG, DOC (Máx. 5MB)</div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="col-12">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3">{{ form.observaciones.value|default:'' }}</textarea>
+                        </div>
+
+                        <!-- Campos automáticos (solo lectura) -->
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="bi bi-info-circle"></i> 
+                                    <strong>Información automática:</strong><br>
+                                    • Usuario creación: <strong>{{ request.user.username }}</strong><br>
+                                    • Fecha creación: <strong id="fecha_actual"></strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="submit" name="guardar" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>GUARDAR
+                                </button>
+                                <button type="submit" name="guardar_agregar_otro" class="btn btn-outline-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>Guardar y agregar otro
+                                </button>
+                                <button type="submit" name="guardar_continuar" class="btn btn-outline-secondary">
+                                    <i class="bi bi-pencil me-1"></i>Guardar y continuar editando
+                                </button>
+                                <a href="{% url 'lista_pagos' %}" class="btn btn-outline-danger">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Establecer fecha y hora actual por defecto
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const time = now.toTimeString().slice(0,5);
+        
+        // Fecha actual para información
+        document.getElementById('fecha_actual').textContent = new Date().toLocaleString();
+        
+        // Establecer fecha y hora actual si no hay valor
+        if (!document.getElementById('fecha_pago').value) {
+            document.getElementById('fecha_pago').value = today;
+            document.getElementById('hora_pago').value = time;
+        }
+        
+        if (!document.getElementById('fecha_vencimiento').value) {
+            document.getElementById('fecha_vencimiento').value = today;
+            document.getElementById('hora_vencimiento').value = time;
+        }
+    });
+</script>
+
+{% endblock %}

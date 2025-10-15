@@ -48,25 +48,27 @@ TEMPLATES = [
 WSGI_APPLICATION = "core.wsgi.application"
 
 # ---- SQLite (rápido para arrancar)
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+#ATABASES = {
+#   "default": {
+#       "ENGINE": "django.db.backends.sqlite3",
+#       "NAME": BASE_DIR / "db.sqlite3",
+#   }
+#
 
 # ---- Cuando quieras pasar a MySQL (descomenta y completa)
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.mysql",
-#         "NAME": "isdm_validacion",
-#         "USER": "root",
-#         "PASSWORD": "",
-#         "HOST": "127.0.0.1",
-#         "PORT": "3306",
-#         "OPTIONS": {"charset": "utf8mb4"},
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'isdm_validacion',        # Nombre de la base de datos
+        'USER': 'root',                   # Usuario de MySQL
+        'PASSWORD': '',                   # Contraseña (vacía por defecto en XAMPP)
+        'HOST': 'localhost',              # Servidor
+        'PORT': '3306',                   # Puerto
+        'OPTIONS': {
+            'sql_mode': 'traditional',
+        }
+    }
+}
 
 AUTH_PASSWORD_VALIDATORS = []
 

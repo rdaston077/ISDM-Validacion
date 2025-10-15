@@ -8,7 +8,7 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <div class="text-muted">Incidencias abiertas</div>
-          <div class="fs-2 fw-bold">7</div>
+          <div class="fs-2 fw-bold">{{ incidencias_abiertas }}</div>
           <small class="text-danger"><i class="bi bi-arrow-up-right"></i> +2 vs ayer</small>
         </div>
         <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
@@ -20,7 +20,7 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <div class="text-muted">Firmas pendientes</div>
-          <div class="fs-2 fw-bold">3</div>
+          <div class="fs-2 fw-bold">{{ firmas_pendientes }}</div>
           <small class="text-muted"><i class="bi bi-dash"></i> igual que ayer</small>
         </div>
         <i class="bi bi-pen fs-1 text-info"></i>
@@ -44,7 +44,7 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <div class="text-muted">Pagos hoy</div>
-          <div class="fs-2 fw-bold">124</div>
+          <div class="fs-2 fw-bold">{{ total_pagos_hoy }}</div>
           <small class="text-success"><i class="bi bi-arrow-down-right"></i> -5% comisiones</small>
         </div>
         <i class="bi bi-cash-coin fs-1 text-primary"></i>
@@ -63,18 +63,22 @@
       </div>
       <hr class="my-2">
       <div class="list-group list-group-flush">
+        {% for alerta in alertas_recientes %}
         <a class="list-group-item d-flex justify-content-between align-items-center">
-          <div><span class="badge text-bg-warning me-2">DIF_MONTO</span>Dif $2.200 en MacroClick</div>
-          <small class="text-muted">Hoy 10:12</small>
+          <div>
+            <span class="badge 
+              {% if alerta.tipo_incidencia == 'DIF_MONTO' %}text-bg-warning
+              {% elif alerta.tipo_incidencia == 'SIN_MATCH' %}text-bg-danger
+              {% else %}text-bg-info{% endif %} me-2">
+              {{ alerta.tipo_incidencia }}
+            </span>
+            {{ alerta.descripcion }}
+          </div>
+          <small class="text-muted">{{ alerta.fecha_apertura|timesince }} ago</small>
         </a>
-        <a class="list-group-item d-flex justify-content-between align-items-center">
-          <div><span class="badge text-bg-danger me-2">SIN_MATCH</span>Transferencia sin match</div>
-          <small class="text-muted">Ayer 18:40</small>
-        </a>
-        <a class="list-group-item d-flex justify-content-between align-items-center">
-          <div><span class="badge text-bg-info me-2">DUPLICADO</span>Pago duplicado</div>
-          <small class="text-muted">Ayer 17:05</small>
-        </a>
+        {% empty %}
+        <div class="list-group-item text-muted text-center">No hay alertas recientes</div>
+        {% endfor %}
       </div>
     </div>
   </div>
@@ -84,9 +88,14 @@
       <h6 class="mb-1">Pendientes de firma</h6>
       <hr class="my-2">
       <ul class="list-unstyled small mb-3">
-        <li class="d-flex justify-content-between"><span>#P-00131 · Anulación</span><span class="badge text-bg-secondary">Solicitada</span></li>
-        <li class="d-flex justify-content-between"><span>#P-00129 · Monto alto</span><span class="badge text-bg-secondary">Solicitada</span></li>
-        <li class="d-flex justify-content-between"><span>#P-00127 · Ajuste</span><span class="badge text-bg-secondary">Solicitada</span></li>
+        {% for pendiente in pendientes_firma %}
+        <li class="d-flex justify-content-between">
+          <span>{{ pendiente.numero_referencia }} · {{ pendiente.get_tipo_incidencia_display }}</span>
+          <span class="badge text-bg-secondary">{{ pendiente.get_estado_display }}</span>
+        </li>
+        {% empty %}
+        <li class="text-muted text-center">No hay pendientes de firma</li>
+        {% endfor %}
       </ul>
       <div class="d-grid gap-2">
         <a class="btn btn-primary" href="/conciliacion/"><i class="bi bi-diagram-2 me-1"></i> Conciliar & Arqueo</a>
@@ -125,7 +134,7 @@
   </div>
 </div>
 
-<!-- Actividad reciente (mini bitácora) -->
+<!-- Actividad reciente (mini bitácora) CORREGIDO -->
 <div class="card p-3 mt-3">
   <div class="d-flex justify-content-between align-items-center">
     <h6 class="mb-0">Actividad reciente</h6>
@@ -135,15 +144,43 @@
   <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">
       <thead>
-        <tr><th>Fecha/Hora</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>Justificación</th></tr>
+        <tr>
+          <th>Fecha/Hora</th>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>Objeto</th>
+          <th>Detalles</th>
+        </tr>
       </thead>
       <tbody>
-        <tr><td>10:15:22</td><td>Monica Lopez</td><td class="text-success">VALIDAR_PAGO</td><td>#P-00123</td><td>-</td></tr>
-        <tr><td>10:13:01</td><td>Juan Diaz</td><td class="text-danger">ANULAR_PAGO</td><td>#P-00120</td><td>Doble imputación</td></tr>
-        <tr><td>09:58:10</td><td class="text-muted">Sistema</td><td class="text-warning">ALERTA_DIF</td><td>D2-045</td><td>Dif $2.200</td></tr>
+        {% for actividad in actividad_reciente %}
+        <tr>
+          <td class="fecha-completa">{{ actividad.fecha_hora }}</td>
+          <td>{{ actividad.usuario }}</td>
+          <td class="
+            {% if actividad.accion == 'VALIDAR_PAGO' %}text-success
+            {% elif actividad.accion == 'ANULAR_PAGO' %}text-danger
+            {% else %}text-warning{% endif %}
+          ">{{ actividad.accion }}</td>
+          <td>{{ actividad.objeto }}</td>
+          <td>{{ actividad.observacion|truncatechars:30|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-muted text-center">No hay actividad reciente</td>
+        </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<style>
+.fecha-completa {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+</style>
 
 {% endblock %}
