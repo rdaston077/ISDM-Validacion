@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -18,5 +18,5 @@ urlpatterns = [
     path('pagos/', views.lista_pagos, name='lista_pagos'),
     path('pagos/agregar/', views.agregar_pago, name='agregar_pago'),  # ✅ ESTA FALTA
 
-    
+    path('accounts/', include('accounts.urls')),
 ]

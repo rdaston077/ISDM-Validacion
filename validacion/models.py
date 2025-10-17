@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 
 class Estado(models.Model):
@@ -39,7 +39,7 @@ class Bitacora(models.Model):
     tabla_sistema = models.ForeignKey(TablaSistema, on_delete=models.CASCADE)
     observacion = models.TextField(blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     registro_afectado = models.IntegerField()
     valores_nuevos = models.JSONField(blank=True, null=True)
     estado = models.BooleanField(default=True)
@@ -62,7 +62,7 @@ class AlertaAdmin(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
     estado_gestion = models.BooleanField(default=False)
-    usuario_asignado = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    usuario_asignado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
     def __str__(self):
         return f"{self.severidad} - {self.mensaje}"
@@ -93,8 +93,8 @@ class Pago(models.Model):
     concepto = models.CharField(max_length=200)
     comprobante = models.FileField(upload_to='comprobantes/', null=True, blank=True)
     observaciones = models.TextField(blank=True)
-    usuario_creacion = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pagos_creados')
-    usuario_modificacion = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos_modificados')
+    usuario_creacion = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='pagos_creados')
+    usuario_modificacion = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos_modificados')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -112,7 +112,7 @@ class Conciliacion(models.Model):
     fecha_conciliacion = models.DateField()
     pasarela = models.CharField(max_length=50)  # MacroClick, etc.
     estado = models.CharField(max_length=20, choices=ESTADOS_CONCILIACION, default='PENDIENTE')
-    usuario_responsable = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario_responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     match_sistema = models.IntegerField(default=0)  # Porcentaje
     diferencias = models.IntegerField(default=0)     # Porcentaje
     sin_match = models.IntegerField(default=0)       # Porcentaje
@@ -146,7 +146,7 @@ class Incidencia(models.Model):
     conciliacion_relacionada = models.ForeignKey(Conciliacion, on_delete=models.CASCADE, null=True, blank=True)
     fecha_apertura = models.DateTimeField(auto_now_add=True)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
-    usuario_asignado = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    usuario_asignado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     justificacion = models.TextField(blank=True)
     
     def __str__(self):

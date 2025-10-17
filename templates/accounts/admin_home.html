@@ -1,0 +1,8 @@
+<!doctype html>
+<html>
+<head><title>Admin Home</title></head>
+<body>
+  <h1>Bienvenido Admin {{ user.username }}</h1>
+  <a href="{% url 'accounts:logout' %}">Cerrar sesión</a>
+</body>
+</html>

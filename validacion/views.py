@@ -3,6 +3,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db.models import Q
 from django.contrib.auth.models import User
+from accounts.models import User  # ← ESTA ES LA BUENA
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
@@ -17,7 +18,9 @@ from .forms import PagoForm
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
+from django.contrib.auth.decorators import login_required
 
+@login_required(login_url='/accounts/login/')
 def dashboard(request):
     hoy = timezone.now().date()
     
@@ -59,6 +62,7 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 # VISTA BITÁCORA COMPLETA
+@login_required(login_url='/accounts/login/')
 def bitacora(request):
     # Obtener parámetros de filtro
     fecha_desde = request.GET.get('desde', '')
@@ -274,6 +278,7 @@ def exportar_bitacora_excel(request):
     return response
 
 # VISTA CONCILIACIÓN COMPLETA
+@login_required(login_url='/accounts/login/')
 def conciliacion(request):
     # Obtener parámetros del formulario
     fecha_conciliacion = request.GET.get('fecha', '')
@@ -328,6 +333,7 @@ def conciliacion(request):
     
     return render(request, 'conciliacion.html', context)
 
+
 def subir_reporte_externo(request):
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
@@ -362,6 +368,7 @@ def generar_incidencias(request):
         return redirect('conciliacion')
     return redirect('conciliacion')
 
+@login_required(login_url='/accounts/login/')
 def lista_pagos(request):
     # Obtener parámetros de filtro
     fecha_desde = request.GET.get('desde', '')

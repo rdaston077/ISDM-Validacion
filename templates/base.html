@@ -24,6 +24,14 @@
         </ul>
       </div>
     </div>
+    {% if user.is_authenticated %}
+  <form action="{% url 'accounts:logout' %}" method="post" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-danger btn-sm">
+      <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+    </button>
+  </form>
+{% endif %}
   </nav>
 
   <main class="container py-4">
