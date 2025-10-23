@@ -1,11 +1,22 @@
 <!doctype html>
 <html>
-<head><title>User Home</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Home</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
 <body>
-  <h1>Bienvenido {{ user.username }}</h1>
-  <form action="{% url 'accounts:logout' %}" method="post" style="display: inline;">
-    {% csrf_token %}
-    <button type="submit">Cerrar sesión</button>
-  </form>
+  <main class="container">
+    <article>
+      <header>
+        <h1>Bienvenido {{ user.username }}</h1>
+      </header>
+      <form action="{% url 'accounts:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="secondary">Cerrar sesión</button>
+      </form>
+    </article>
+  </main>
 </body>
 </html>

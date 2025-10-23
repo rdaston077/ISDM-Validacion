@@ -1,13 +1,24 @@
-<!--<!doctype html>
+<!doctype html>
 <html>
-<head><title>Register</title></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
 <body>
-  <h1>Registrarse</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Crear cuenta</button>
-  </form>
-  <a href="{% url 'accounts:login' %}">Volver al login</a>
+    <main class="container">
+        <article>
+            <h1>Registrarse</h1>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Crear cuenta</button>
+            </form>
+            <footer>
+                <a href="{% url 'accounts:login' %}">Volver al login</a>
+            </footer>
+        </article>
+    </main>
 </body>
 </html>

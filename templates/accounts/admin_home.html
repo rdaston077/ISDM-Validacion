@@ -1,8 +1,19 @@
 <!doctype html>
-<html>
-<head><title>Admin Home</title></head>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Home</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
 <body>
-  <h1>Bienvenido Admin {{ user.username }}</h1>
-  <a href="{% url 'accounts:logout' %}">Cerrar sesión</a>
+    
+    <main class="container">
+        <h1>Bienvenido Admin {{ user.username }}</h1>
+        
+        <a href="{% url 'accounts:logout' %}" role="button">Cerrar sesión</a>
+    </main>
+
 </body>
 </html>

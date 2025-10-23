@@ -1,22 +1,32 @@
 {% load static %}
 <!doctype html>
-<html>
-<head><title>Login</title></head>
-<body>
-  <h1>Login</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div>
-      <label>Usuario</label>
-      {{ form.username }}
-    </div>
-    <div>
-      <label>Contraseña</label>
-      {{ form.password }}
-    </div>
-    <button type="submit">Entrar</button>
-  </form>
+<html lang="es"> <head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Login</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
 
-</body>
+</head>
+<body>
+
+  <main class="container" style="max-width: 600px; margin-top: 2rem;">
+  
+    <h1>Login</h1>
+    <form method="post">
+      {% csrf_token %}
+      
+      {{ form.non_field_errors }}
+      
+      <div>
+        <label for="{{ form.username.id_for_label }}">Usuario</label>
+        {{ form.username }}
+      </div>
+      <div>
+        <label for="{{ form.password.id_for_label }}">Contraseña</label>
+        {{ form.password }}
+      </div>
+      
+      <button type="submit">Entrar</button>
+    </form>
+
+  </main> </body>
 </html>
