@@ -15,7 +15,11 @@ urlpatterns = [
     
     # URLs de pagos:
     path("pagos/", views.lista_pagos, name="lista_pagos"),
-    path("pagos/agregar/", views.agregar_pago, name="agregar_pago"),  # ✅ NUEVA URL
+    path("pagos/agregar/", views.agregar_pago, name="agregar_pago"),
+    
+    # ✅ NUEVAS URLs PARA DETALLE Y EDITAR PAGO
+    path("pagos/<int:pago_id>/", views.detalle_pago, name="detalle_pago"),
+    path("pagos/<int:pago_id>/editar/", views.editar_pago, name="editar_pago"),
     
     # URLs de exportación:
     path("bitacora/exportar-pdf/", views.exportar_bitacora_pdf, name="exportar_bitacora_pdf"),
@@ -23,6 +27,6 @@ urlpatterns = [
 
     path('exportar-pagos-pdf/', views.exportar_pagos_pdf, name='exportar_pagos_pdf'),
     path('exportar-pagos-excel/', views.exportar_pagos_excel, name='exportar_pagos_excel'),
-	
+    
     path('accounts/', include('accounts.urls', namespace='accounts')),
 ]

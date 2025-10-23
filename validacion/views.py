@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db.models import Q
@@ -19,6 +19,7 @@ import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 @login_required(login_url='/accounts/login/')
 def dashboard(request):
@@ -332,7 +333,6 @@ def conciliacion(request):
     }
     
     return render(request, 'conciliacion.html', context)
-
 
 def subir_reporte_externo(request):
     if request.method == 'POST' and request.FILES.get('archivo'):
@@ -703,3 +703,123 @@ def exportar_pagos_excel(request):
     response['Content-Disposition'] = 'attachment; filename="reporte_pagos.xlsx"'
     
     return response
+
+# VISTA PARA VER DETALLE DE PAGO - CORREGIDA
+@login_required(login_url='/accounts/login/')
+def detalle_pago(request, pago_id):
+    """Vista para ver detalles de un pago específico"""
+    pago = get_object_or_404(Pago, id=pago_id)
+    
+    # Obtener incidencias relacionadas con este pago
+    incidencias_relacionadas = Incidencia.objects.filter(pago_relacionado=pago)
+    
+    # Obtener actividad de bitácora relacionada
+    actividad_pago = Bitacora.objects.filter(registro_afectado=pago.id).order_by('-fecha')
+    
+    context = {
+        'pago': pago,
+        'incidencias_relacionadas': incidencias_relacionadas,
+        'actividad_pago': actividad_pago,
+        'titulo': f'Detalle - {pago.referencia}',
+        'now': timezone.now()  # Agregar esto para el template
+    }
+    # ✅ CORRECCIÓN: Usar la ruta correcta del template
+    return render(request, 'detalle_pago.html', context)
+
+# VISTA PARA EDITAR PAGO - CORREGIDA
+@login_required(login_url='/accounts/login/')
+def editar_pago(request, pago_id):
+    """Vista para editar un pago existente"""
+    pago = get_object_or_404(Pago, id=pago_id)
+    
+    if request.method == 'POST':
+        form = PagoForm(request.POST, request.FILES, instance=pago)
+        if form.is_valid():
+            pago_editado = form.save(commit=False)
+            
+            # Combinar fecha y hora (si tu form tiene campos separados)
+            if 'fecha_pago' in form.cleaned_data and 'hora_pago' in form.cleaned_data:
+                fecha_pago = form.cleaned_data['fecha_pago']
+                hora_pago = form.cleaned_data['hora_pago']
+                pago_editado.fecha_pago = datetime.combine(fecha_pago, hora_pago)
+            
+            pago_editado.save()
+            
+            # Registrar en bitácora
+            try:
+                tipo_accion, created = TipoAccion.objects.get_or_create(
+                    nombre='MODIFICAR_PAGO',
+                    defaults={'estado_id': 1, 'tabla_sistema_id': 1}
+                )
+                tabla_sistema, created = TablaSistema.objects.get_or_create(
+                    nombre='Pagos',
+                    defaults={'descripcion': 'Tabla de pagos del sistema', 'importancia': 1, 'estado_id': 1}
+                )
+                
+                Bitacora.objects.create(
+                    tipo_accion=tipo_accion,
+                    tabla_sistema=tabla_sistema,
+                    observacion=f"Pago modificado: {pago.referencia}",
+                    usuario=request.user,
+                    registro_afectado=pago.id,
+                    valores_nuevos={
+                        'referencia': pago.referencia,
+                        'estudiante': pago.estudiante_nombre,
+                        'monto': str(pago.monto),
+                        'estado': pago.estado
+                    }
+                )
+            except Exception as e:
+                print(f"Error al registrar en bitácora: {e}")
+            
+            messages.success(request, f'✅ Pago {pago.referencia} actualizado correctamente')
+            return redirect('lista_pagos')
+    else:
+        form = PagoForm(instance=pago)
+    
+    context = {
+        'form': form,
+        'pago': pago,
+        'titulo': f'Editar - {pago.referencia}'
+    }
+    # ✅ CORRECCIÓN: Usar la ruta correcta del template
+    return render(request, 'editar_pago.html', context)
+
+# VISTA PARA ELIMINAR PAGO (OPCIONAL)
+@login_required(login_url='/accounts/login/')
+def eliminar_pago(request, pago_id):
+    """Vista para eliminar un pago"""
+    pago = get_object_or_404(Pago, id=pago_id)
+    
+    if request.method == 'POST':
+        referencia = pago.referencia
+        pago.delete()
+        
+        # Registrar en bitácora
+        try:
+            tipo_accion, created = TipoAccion.objects.get_or_create(
+                nombre='ELIMINAR_PAGO',
+                defaults={'estado_id': 1, 'tabla_sistema_id': 1}
+            )
+            tabla_sistema, created = TablaSistema.objects.get_or_create(
+                nombre='Pagos',
+                defaults={'descripcion': 'Tabla de pagos del sistema', 'importancia': 1, 'estado_id': 1}
+            )
+            
+            Bitacora.objects.create(
+                tipo_accion=tipo_accion,
+                tabla_sistema=tabla_sistema,
+                observacion=f"Pago eliminado: {referencia}",
+                usuario=request.user,
+                registro_afectado=pago_id
+            )
+        except Exception as e:
+            print(f"Error al registrar en bitácora: {e}")
+        
+        messages.success(request, f'✅ Pago {referencia} eliminado correctamente')
+        return redirect('lista_pagos')
+    
+    context = {
+        'pago': pago
+    }
+    return render(request, 'eliminar_pago.html', context)

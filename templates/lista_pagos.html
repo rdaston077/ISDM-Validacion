@@ -165,12 +165,13 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" title="Ver detalles">
+                                        <!-- CORRECCIÓN: Cambiar button por a con href -->
+                                        <a href="{% url 'detalle_pago' pago.id %}" class="btn btn-outline-primary" title="Ver detalles">
                                             <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-outline-secondary" title="Editar">
+                                        </a>
+                                        <a href="{% url 'editar_pago' pago.id %}" class="btn btn-outline-warning" title="Editar">
                                             <i class="bi bi-pencil"></i>
-                                        </button>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

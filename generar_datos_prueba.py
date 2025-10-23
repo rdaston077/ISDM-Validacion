@@ -13,7 +13,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
 from django.utils import timezone
-from django.contrib.auth.models import User
+from accounts.models import User
 from validacion.models import (
     Estado, TablaSistema, TipoAccion, 
     Bitacora, Pago, Incidencia, Conciliacion
