@@ -2,8 +2,14 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+
 from .forms import UserRegisterForm, LoginForm
 from .models import User
+from .decorators import role_required
+
 
 class CustomLoginView(LoginView):
     authentication_form = LoginForm
@@ -12,30 +18,36 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
         user = self.request.user
         if getattr(user, 'role', None) == User.ROLE_ADMIN:
-            return '/'  # Admin va a raíz
-        return '/'      # User también va a raíz (mismo lugar)
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('/')  # ← Si ya está logueado va a raíz
-        return super().dispatch(request, *args, **kwargs)
+            return '/'  # Si es admin, va al inicio
+        return '/'      # Si es usuario común, también por ahora
+
 
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('accounts:login')
 
+
+# ✅ RegisterView solo accesible por admin
+@method_decorator(login_required(login_url='/accounts/login/'), name='dispatch')
+@method_decorator(role_required(User.ROLE_ADMIN), name='dispatch')
 class RegisterView(CreateView):
-    template_name = 'accounts/register.html'
+    model = User
     form_class = UserRegisterForm
+    template_name = 'accounts/register.html'
     success_url = reverse_lazy('accounts:login')
 
     def form_valid(self, form):
-        # si no querés que role venga del form, forzalo acá:
+        # Si el form no define rol, le pone 'user' por defecto
         if 'role' not in form.cleaned_data:
             form.instance.role = User.ROLE_USER
         return super().form_valid(form)
 
-# Home views simples para redirección
-class AdminHomeView(TemplateView):
+
+# ✅ Home de admin y usuario — ambas requieren login
+class AdminHomeView(LoginRequiredMixin, TemplateView):
+    login_url = '/accounts/login/'
     template_name = 'accounts/admin_home.html'
 
-class UserHomeView(TemplateView):
+
+class UserHomeView(LoginRequiredMixin, TemplateView):
+    login_url = '/accounts/login/'
     template_name = 'accounts/user_home.html'
