@@ -2,6 +2,8 @@
 from django.contrib import admin
 from django.urls import include, path
 from validacion import views
+from django.urls import path, include
+from django.contrib import admin
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -29,4 +31,6 @@ urlpatterns = [
     path('exportar-pagos-excel/', views.exportar_pagos_excel, name='exportar_pagos_excel'),
     
     path('accounts/', include('accounts.urls', namespace='accounts')),
+
+    path('', include('validacion.urls')),
 ]

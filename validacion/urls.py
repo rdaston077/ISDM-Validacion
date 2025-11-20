@@ -11,22 +11,26 @@ urlpatterns = [
     path('bitacora/exportar-pdf/', views.exportar_bitacora_pdf, name='exportar_bitacora_pdf'),
     path('bitacora/exportar-excel/', views.exportar_bitacora_excel, name='exportar_bitacora_excel'),
     
-    # Conciliación
-    path('subir-reporte/', views.subir_reporte_externo, name='subir_reporte_externo'),
-    path('generar-incidencias/', views.generar_incidencias, name='generar_incidencias'),
+    # Conciliación - CORREGIDAS Y SIN DUPLICADOS
+     path('conciliacion/subir-reporte/', views.subir_reporte_externo, name='subir_reporte_externo'),
+    path('conciliacion/generar-incidencias/', views.generar_incidencias, name='generar_incidencias'),
+    path('conciliacion/generar-arqueo/', views.generar_arqueo, name='generar_arqueo'),
+    path('conciliacion/conciliar-seleccionados/', views.conciliar_seleccionados, name='conciliar_seleccionados'),  # ✅ NUEVA
+    path('conciliacion/resolver-diferencia/', views.resolver_diferencia, name='resolver_diferencia'),  # ✅ NUEVA
     
-    # Pagos
+    # PAGOS
     path('pagos/', views.lista_pagos, name='lista_pagos'),
-    path('pagos/agregar/', views.agregar_pago, name='agregar_pago'),
+    path('pago/agregar/', views.agregar_pago, name='agregar_pago'),
+    path('pago/<int:pago_id>/', views.detalle_pago, name='detalle_pago'),
+    path('pago/editar/<int:pago_id>/', views.editar_pago, name='editar_pago'),
+    path('pago/eliminar/<int:pago_id>/', views.eliminar_pago, name='eliminar_pago'),
     
-    # ✅ NUEVAS URLs PARA DETALLE Y EDITAR PAGO
-    path('pagos/<int:pago_id>/', views.detalle_pago, name='detalle_pago'),
-    path('pagos/<int:pago_id>/editar/', views.editar_pago, name='editar_pago'),
+    # Incidencias
+    path('pago/<int:pago_id>/incidencia/crear/', views.crear_incidencia, name='crear_incidencia'),
     
     # Exportaciones de pagos
     path('pagos/exportar-pdf/', views.exportar_pagos_pdf, name='exportar_pagos_pdf'),
     path('pagos/exportar-excel/', views.exportar_pagos_excel, name='exportar_pagos_excel'),
     
     path('accounts/', include('accounts.urls')),
-
 ]

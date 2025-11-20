@@ -205,34 +205,111 @@
                     </div>
                 </div>
 
-                <!-- Acciones Rápidas -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-lightning me-2"></i>Acciones Rápidas
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'editar_pago' pago.id %}" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil me-1"></i>Editar Pago
-                            </a>
-                            
-                            {% if not incidencias_relacionadas %}
-                            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#crearIncidenciaModal">
-                                <i class="bi bi-plus-circle me-1"></i>Crear Incidencia
-                            </button>
-                            {% endif %}
-                            
-                            <a href="{% url 'lista_pagos' %}" class="btn btn-secondary btn-sm">
-                                <i class="bi bi-list-ul me-1"></i>Volver a Lista
-                            </a>
-                        </div>
-                    </div>
+               <!-- Acciones Rápidas -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="d-grid gap-2">
+            <a href="{% url 'editar_pago' pago.id %}" class="btn btn-warning btn-sm">
+                <i class="bi bi-pencil me-1"></i>Editar Pago
+            </a>
+            
+            <!-- Botón para crear incidencia -->
+            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#crearIncidenciaModal">
+                <i class="bi bi-plus-circle me-1"></i>Crear Incidencia
+            </button>
+            
+            <!-- Botón para ver incidencias existentes -->
+            {% if incidencias_relacionadas %}
+            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#listaIncidencias">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Ver {{ incidencias_relacionadas.count }} Incidencia(s)
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'lista_pagos' %}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-list-ul me-1"></i>Volver a Lista
+            </a>
+        </div>
+        
+        <!-- Lista colapsable de incidencias -->
+        {% if incidencias_relacionadas %}
+        <div class="collapse mt-3" id="listaIncidencias">
+            <div class="card card-body">
+                <h6 class="mb-2">Incidencias Activas:</h6>
+                {% for incidencia in incidencias_relacionadas|slice:":3" %}
+                <div class="border-start border-warning border-3 ps-2 mb-2">
+                    <small class="fw-bold">
+                        {{ incidencia.get_tipo_incidencia_display }}
+                        <span class="badge bg-{% if incidencia.estado == 'ABIERTA' %}warning{% elif incidencia.estado == 'CERRADA' %}success{% else %}secondary{% endif %} ms-1">
+                            {{ incidencia.get_estado_display }}
+                        </span>
+                    </small>
+                    <br>
+                    <small class="text-muted">{{ incidencia.descripcion|truncatewords:8 }}</small>
+                    {% if incidencia.monto_diferencia %}
+                    <br>
+                    <small class="text-danger">
+                        <strong>Diferencia: ${{ incidencia.monto_diferencia|floatformat:2 }}</strong>
+                    </small>
+                    {% endif %}
                 </div>
+                {% endfor %}
+                {% if incidencias_relacionadas.count > 3 %}
+                <small class="text-muted">+ {{ incidencias_relacionadas.count|add:"-3" }} más...</small>
+                {% endif %}
             </div>
         </div>
-
+        {% endif %}
+    </div>
+</div>
+            
+            <!-- Botón para crear incidencia - siempre visible -->
+            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#crearIncidenciaModal">
+                <i class="bi bi-plus-circle me-1"></i>Crear Incidencia
+            </button>
+            
+            <!-- Botón para ver incidencias existentes -->
+            {% if incidencias_relacionadas %}
+            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#listaIncidencias">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Ver {{ incidencias_relacionadas.count }} Incidencia(s)
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'lista_pagos' %}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-list-ul me-1"></i>Volver a Lista
+            </a>
+        </div>
+        
+        <!-- Lista colapsable de incidencias -->
+        {% if incidencias_relacionadas %}
+        <div class="collapse mt-3" id="listaIncidencias">
+            <div class="card card-body">
+                <h6 class="mb-2">Incidencias Activas:</h6>
+                {% for incidencia in incidencias_relacionadas|slice:":3" %}
+                <div class="border-start border-warning border-3 ps-2 mb-2">
+                    <small class="fw-bold">{{ incidencia.titulo }}</small>
+                    <br>
+                    <small class="text-muted">{{ incidencia.descripcion|truncatewords:8 }}</small>
+                    <br>
+                    <span class="badge bg-{% if incidencia.estado == 'ABIERTA' %}warning{% elif incidencia.estado == 'EN_PROCESO' %}info{% else %}success{% endif %}">
+                        {{ incidencia.estado }}
+                    </span>
+                </div>
+                {% endfor %}
+                {% if incidencias_relacionadas.count > 3 %}
+                <small class="text-muted">+ {{ incidencias_relacionadas.count|add:"-3" }} más...</small>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
         <!-- Resumen de Estados -->
         <div class="row mt-4">
             <div class="col-12">
@@ -288,20 +365,94 @@
 
 <!-- Modal para Crear Incidencia -->
 <div class="modal fade" id="crearIncidenciaModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Crear Incidencia</h5>
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Crear Incidencia - {{ pago.referencia }}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>¿Deseas crear una incidencia para este pago?</p>
-                <p class="text-muted"><small>Referencia: {{ pago.referencia }}</small></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <a href="#" class="btn btn-primary">Crear Incidencia</a>
-            </div>
+            <form method="post" action="{% url 'crear_incidencia' pago.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tipo_incidencia" class="form-label">Tipo de Incidencia *</label>
+                                <select class="form-select" id="tipo_incidencia" name="tipo_incidencia" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    {% for value, label in tipos_incidencia %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="monto_diferencia" class="form-label">Monto Diferencia</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="monto_diferencia" 
+                                           name="monto_diferencia" step="0.01" min="0"
+                                           placeholder="0.00">
+                                </div>
+                                <div class="form-text">Solo para diferencias de monto</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción *</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" 
+                                  rows="4" placeholder="Describe detalladamente la incidencia..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="justificacion" class="form-label">Justificación</label>
+                        <textarea class="form-control" id="justificacion" name="justificacion" 
+                                  rows="3" placeholder="Justificación de la incidencia..."></textarea>
+                    </div>
+                    
+                    <!-- Información del pago -->
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Información del pago:</strong><br>
+                            • Referencia: <strong>{{ pago.referencia }}</strong><br>
+                            • Estudiante: <strong>{{ pago.estudiante_nombre }}</strong><br>
+                            • Monto: <strong>${{ pago.monto|floatformat:2 }}</strong>
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Crear Incidencia</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                    
+                    <!-- Información del pago para contexto -->
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Información del pago relacionado:</strong><br>
+                            • Referencia: <strong>{{ pago.referencia }}</strong><br>
+                            • Estudiante: <strong>{{ pago.estudiante_nombre }}</strong><br>
+                            • Monto: <strong>${{ pago.monto|floatformat:2 }}</strong><br>
+                            • Estado: <strong>{{ pago.estado }}</strong>
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-plus-circle me-1"></i>Crear Incidencia
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -13,7 +13,7 @@
             </a>
         </div>
 
-        <!-- Formulario de Pago CON RELACIONES -->
+        <!-- Formulario de Pago -->
         <div class="card">
             <div class="card-header bg-light">
                 <h5 class="card-title mb-0 text-dark">
@@ -24,23 +24,46 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
+                    <!-- MOSTRAR ERRORES DEL FORM -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Errores en el formulario:</strong>
+                        <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
                     <div class="row g-3">
                         <!-- Referencia -->
                         <div class="col-md-6">
-                            <label for="referencia" class="form-label">Referencia *</label>
-                            <input type="text" class="form-control" id="referencia" name="referencia" 
-                                   placeholder="Ej: #P-00131" value="{{ form.referencia.value|default:'' }}" required>
-                            <div class="form-text">Formato: #P-XXXXX</div>
+                            <label for="id_referencia" class="form-label">Referencia *</label>
+                            <input type="text" class="form-control" id="id_referencia" name="referencia" 
+                                   value="{{ form.referencia.value|default:'' }}" required
+                                   placeholder="Ej: #P-00131">
+                            {% if form.referencia.errors %}
+                                <div class="text-danger small">{{ form.referencia.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Monto -->
                         <div class="col-md-6">
-                            <label for="monto" class="form-label">Monto *</label>
+                            <label for="id_monto" class="form-label">Monto *</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="monto" name="monto" 
+                                <input type="number" class="form-control" id="id_monto" name="monto" 
                                        step="0.01" min="0" value="{{ form.monto.value|default:'' }}" required>
                             </div>
+                            {% if form.monto.errors %}
+                                <div class="text-danger small">{{ form.monto.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Fecha Pago -->
@@ -48,11 +71,13 @@
                             <label class="form-label">Fecha Pago *</label>
                             <div class="row g-2">
                                 <div class="col-8">
-                                    <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" 
+                                    <label class="form-label small text-muted d-block">Fecha</label>
+                                    <input type="date" class="form-control" id="id_fecha_pago" name="fecha_pago" 
                                            value="{{ form.fecha_pago.value|default:'' }}" required>
                                 </div>
                                 <div class="col-4">
-                                    <input type="time" class="form-control" id="hora_pago" name="hora_pago" 
+                                    <label class="form-label small text-muted d-block">Hora</label>
+                                    <input type="time" class="form-control" id="id_hora_pago" name="hora_pago" 
                                            value="{{ form.hora_pago.value|default:'' }}" required>
                                 </div>
                             </div>
@@ -63,11 +88,13 @@
                             <label class="form-label">Fecha Vencimiento *</label>
                             <div class="row g-2">
                                 <div class="col-8">
-                                    <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento" 
+                                    <label class="form-label small text-muted d-block">Fecha</label>
+                                    <input type="date" class="form-control" id="id_fecha_vencimiento" name="fecha_vencimiento" 
                                            value="{{ form.fecha_vencimiento.value|default:'' }}" required>
                                 </div>
                                 <div class="col-4">
-                                    <input type="time" class="form-control" id="hora_vencimiento" name="hora_vencimiento" 
+                                    <label class="form-label small text-muted d-block">Hora</label>
+                                    <input type="time" class="form-control" id="id_hora_vencimiento" name="hora_vencimiento" 
                                            value="{{ form.hora_vencimiento.value|default:'' }}" required>
                                 </div>
                             </div>
@@ -75,8 +102,8 @@
 
                         <!-- Estado -->
                         <div class="col-md-6">
-                            <label for="estado" class="form-label">Estado *</label>
-                            <select class="form-select" id="estado" name="estado" required>
+                            <label for="id_estado" class="form-label">Estado *</label>
+                            <select class="form-select" id="id_estado" name="estado" required>
                                 <option value="">Seleccionar estado...</option>
                                 {% for value, label in form.fields.estado.choices %}
                                     <option value="{{ value }}" {% if form.estado.value == value %}selected{% endif %}>
@@ -84,12 +111,15 @@
                                     </option>
                                 {% endfor %}
                             </select>
+                            {% if form.estado.errors %}
+                                <div class="text-danger small">{{ form.estado.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Método de Pago -->
                         <div class="col-md-6">
-                            <label for="metodo_pago" class="form-label">Método de Pago *</label>
-                            <select class="form-select" id="metodo_pago" name="metodo_pago" required>
+                            <label for="id_metodo_pago" class="form-label">Método de Pago *</label>
+                            <select class="form-select" id="id_metodo_pago" name="metodo_pago" required>
                                 <option value="">Seleccionar método...</option>
                                 {% for value, label in form.fields.metodo_pago.choices %}
                                     <option value="{{ value }}" {% if form.metodo_pago.value == value %}selected{% endif %}>
@@ -97,47 +127,65 @@
                                     </option>
                                 {% endfor %}
                             </select>
+                            {% if form.metodo_pago.errors %}
+                                <div class="text-danger small">{{ form.metodo_pago.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Comisión Porcentaje -->
                         <div class="col-md-6">
-                            <label for="comision_porcentaje" class="form-label">Comisión Porcentaje</label>
+                            <label for="id_comision_porcentaje" class="form-label">Comisión Porcentaje</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="comision_porcentaje" name="comision_porcentaje" 
+                                <input type="number" class="form-control" id="id_comision_porcentaje" name="comision_porcentaje" 
                                        step="0.01" min="0" max="100" value="{{ form.comision_porcentaje.value|default:'0' }}">
                                 <span class="input-group-text">%</span>
                             </div>
+                            {% if form.comision_porcentaje.errors %}
+                                <div class="text-danger small">{{ form.comision_porcentaje.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Estudiante Nombre -->
                         <div class="col-md-6">
-                            <label for="estudiante_nombre" class="form-label">Estudiante Nombre *</label>
-                            <input type="text" class="form-control" id="estudiante_nombre" name="estudiante_nombre" 
+                            <label for="id_estudiante_nombre" class="form-label">Estudiante Nombre *</label>
+                            <input type="text" class="form-control" id="id_estudiante_nombre" name="estudiante_nombre" 
                                    value="{{ form.estudiante_nombre.value|default:'' }}" required>
+                            {% if form.estudiante_nombre.errors %}
+                                <div class="text-danger small">{{ form.estudiante_nombre.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Concepto -->
                         <div class="col-12">
-                            <label for="concepto" class="form-label">Concepto *</label>
-                            <input type="text" class="form-control" id="concepto" name="concepto" 
+                            <label for="id_concepto" class="form-label">Concepto *</label>
+                            <input type="text" class="form-control" id="id_concepto" name="concepto" 
                                    value="{{ form.concepto.value|default:'' }}" required>
+                            {% if form.concepto.errors %}
+                                <div class="text-danger small">{{ form.concepto.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Comprobante -->
                         <div class="col-12">
-                            <label for="comprobante" class="form-label">Comprobante</label>
-                            <input type="file" class="form-control" id="comprobante" name="comprobante" 
+                            <label for="id_comprobante" class="form-label">Comprobante</label>
+                            <input type="file" class="form-control" id="id_comprobante" name="comprobante" 
                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                             <div class="form-text">Formatos: PDF, JPG, PNG, DOC (Máx. 5MB)</div>
+                            {% if form.comprobante.errors %}
+                                <div class="text-danger small">{{ form.comprobante.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <!-- Observaciones -->
                         <div class="col-12">
-                            <label for="observaciones" class="form-label">Observaciones</label>
-                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3">{{ form.observaciones.value|default:'' }}</textarea>
+                            <label for="id_observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="id_observaciones" name="observaciones" rows="3">{{ form.observaciones.value|default:'' }}</textarea>
+                            {% if form.observaciones.errors %}
+                                <div class="text-danger small">{{ form.observaciones.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
-                        <!-- Campos automáticos (solo lectura) -->
+                        <!-- Campos automáticos -->
                         <div class="col-12">
                             <div class="alert alert-info">
                                 <small>
@@ -186,14 +234,25 @@
         document.getElementById('fecha_actual').textContent = new Date().toLocaleString();
         
         // Establecer fecha y hora actual si no hay valor
-        if (!document.getElementById('fecha_pago').value) {
-            document.getElementById('fecha_pago').value = today;
-            document.getElementById('hora_pago').value = time;
-        }
+        const fechaPago = document.getElementById('id_fecha_pago');
+        const horaPago = document.getElementById('id_hora_pago');
+        const fechaVencimiento = document.getElementById('id_fecha_vencimiento');
+        const horaVencimiento = document.getElementById('id_hora_vencimiento');
         
-        if (!document.getElementById('fecha_vencimiento').value) {
-            document.getElementById('fecha_vencimiento').value = today;
-            document.getElementById('hora_vencimiento').value = time;
+        if (fechaPago && !fechaPago.value) {
+            fechaPago.value = today;
+        }
+        if (horaPago && !horaPago.value) {
+            horaPago.value = time;
+        }
+        if (fechaVencimiento && !fechaVencimiento.value) {
+            // Fecha de vencimiento por defecto: hoy + 30 días
+            const venDate = new Date();
+            venDate.setDate(venDate.getDate() + 30);
+            fechaVencimiento.value = venDate.toISOString().split('T')[0];
+        }
+        if (horaVencimiento && !horaVencimiento.value) {
+            horaVencimiento.value = time;
         }
     });
 </script>

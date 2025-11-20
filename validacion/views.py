@@ -140,6 +140,7 @@ def bitacora(request):
     return render(request, 'bitacora.html', context)
 
 # EXPORTAR BITÁCORA A PDF
+@login_required(login_url='/accounts/login/')
 def exportar_bitacora_pdf(request):
     # Obtener los mismos filtros que en la vista bitacora
     fecha_desde = request.GET.get('desde', '')
@@ -228,6 +229,7 @@ def exportar_bitacora_pdf(request):
     return response
 
 # EXPORTAR BITÁCORA A EXCEL (CSV)
+@login_required(login_url='/accounts/login/')
 def exportar_bitacora_excel(request):
     # Obtener los mismos filtros que en la vista bitacora
     fecha_desde = request.GET.get('desde', '')
@@ -334,6 +336,7 @@ def conciliacion(request):
     
     return render(request, 'conciliacion.html', context)
 
+@login_required(login_url='/accounts/login/')
 def subir_reporte_externo(request):
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
@@ -342,6 +345,7 @@ def subir_reporte_externo(request):
         return redirect('conciliacion')
     return redirect('conciliacion')
 
+@login_required(login_url='/accounts/login/')
 def generar_incidencias(request):
     if request.method == 'POST':
         # Lógica para generar incidencias automáticamente
@@ -425,6 +429,7 @@ def lista_pagos(request):
     return render(request, 'lista_pagos.html', context)
 
 # NUEVA FUNCIÓN PARA AGREGAR PAGOS
+@login_required(login_url='/accounts/login/')
 def agregar_pago(request):
     if request.method == 'POST':
         form = PagoForm(request.POST, request.FILES)
@@ -479,6 +484,7 @@ def agregar_pago(request):
     # ✅ CORREGIDO: Usar 'pago.html' en lugar de 'pagos_cuotas.html'
     return render(request, 'pago.html', {'form': form})
 
+@login_required(login_url='/accounts/login/')
 def exportar_pagos_pdf(request):
     # Obtener parámetros de filtro (igual que en lista_pagos)
     fecha_desde = request.GET.get('desde', '')
@@ -585,6 +591,7 @@ def exportar_pagos_pdf(request):
     
     return response
 
+@login_required(login_url='/accounts/login/')
 def exportar_pagos_excel(request):
     # Obtener parámetros de filtro (igual que en lista_pagos)
     fecha_desde = request.GET.get('desde', '')
@@ -716,14 +723,17 @@ def detalle_pago(request, pago_id):
     # Obtener actividad de bitácora relacionada
     actividad_pago = Bitacora.objects.filter(registro_afectado=pago.id).order_by('-fecha')
     
+    # Pasar los tipos de incidencia al template
+    tipos_incidencia = Incidencia.TIPOS_INCIDENCIA
+    
     context = {
         'pago': pago,
         'incidencias_relacionadas': incidencias_relacionadas,
         'actividad_pago': actividad_pago,
+        'tipos_incidencia': tipos_incidencia,  # NUEVO: agregar esto
         'titulo': f'Detalle - {pago.referencia}',
-        'now': timezone.now()  # Agregar esto para el template
+        'now': timezone.now()
     }
-    # ✅ CORRECCIÓN: Usar la ruta correcta del template
     return render(request, 'detalle_pago.html', context)
 
 # VISTA PARA EDITAR PAGO - CORREGIDA
@@ -823,3 +833,320 @@ def eliminar_pago(request, pago_id):
         'pago': pago
     }
     return render(request, 'eliminar_pago.html', context)
+
+@login_required(login_url='/accounts/login/')
+def crear_incidencia(request, pago_id):
+    """Vista para crear una incidencia desde el detalle de pago"""
+    pago = get_object_or_404(Pago, id=pago_id)
+    
+    if request.method == 'POST':
+        try:
+            # Generar número de referencia único para la incidencia
+            ultima_incidencia = Incidencia.objects.order_by('-id').first()
+            if ultima_incidencia:
+                try:
+                    ultimo_numero = int(ultima_incidencia.numero_referencia.split('-')[1])
+                    nuevo_numero = f"#I-{ultimo_numero + 1:05d}"
+                except (ValueError, IndexError):
+                    nuevo_numero = "#I-00001"
+            else:
+                nuevo_numero = "#I-00001"
+            
+            # Crear la incidencia
+            incidencia = Incidencia(
+                numero_referencia=nuevo_numero,
+                tipo_incidencia=request.POST.get('tipo_incidencia'),
+                descripcion=request.POST.get('descripcion'),
+                justificacion=request.POST.get('justificacion', ''),
+                pago_relacionado=pago,
+                usuario_asignado=request.user,
+            )
+            
+            # Manejar monto diferencia si existe
+            monto_diferencia = request.POST.get('monto_diferencia')
+            if monto_diferencia and monto_diferencia.strip():
+                incidencia.monto_diferencia = monto_diferencia
+            
+            incidencia.save()
+            
+            # Registrar en bitácora
+            try:
+                tipo_accion, created = TipoAccion.objects.get_or_create(
+                    nombre='CREAR_INCIDENCIA',
+                    defaults={'estado_id': 1, 'tabla_sistema_id': 1}
+                )
+                tabla_sistema, created = TablaSistema.objects.get_or_create(
+                    nombre='Incidencias',
+                    defaults={'descripcion': 'Tabla de incidencias del sistema', 'importancia': 1, 'estado_id': 1}
+                )
+                
+                Bitacora.objects.create(
+                    tipo_accion=tipo_accion,
+                    tabla_sistema=tabla_sistema,
+                    observacion=f"Incidencia {nuevo_numero} creada para pago {pago.referencia}",
+                    usuario=request.user,
+                    registro_afectado=incidencia.id,
+                    valores_nuevos={
+                        'tipo_incidencia': incidencia.tipo_incidencia,
+                        'pago_relacionado': pago.referencia,
+                        'descripcion': incidencia.descripcion[:100] + '...' if len(incidencia.descripcion) > 100 else incidencia.descripcion
+                    }
+                )
+            except Exception as e:
+                print(f"Error en bitácora: {e}")
+            
+            messages.success(request, f'✅ Incidencia {nuevo_numero} creada exitosamente')
+            return redirect('detalle_pago', pago_id=pago.id)
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al crear la incidencia: {str(e)}')
+            return redirect('detalle_pago', pago_id=pago.id)
+    
+    # Si no es POST, redirigir al detalle
+    return redirect('detalle_pago', pago_id=pago.id)
+
+@login_required(login_url='/accounts/login/')
+def generar_arqueo(request):
+    if request.method == 'POST':
+        hoy = timezone.now().date()
+        
+        try:
+            # Calcular métricas para el arqueo
+            total_pagos = Pago.objects.filter(created_at__date=hoy).count()
+            
+            # Usar los mismos cálculos que en el dashboard
+            pagos_ok = sum(1 for p in Pago.objects.filter(created_at__date=hoy) 
+                          if getattr(p, 'estado_conciliacion', '') == 'OK')
+            pagos_dif = sum(1 for p in Pago.objects.filter(created_at__date=hoy) 
+                           if getattr(p, 'estado_conciliacion', '') == 'DIF')
+            pagos_sin_match = sum(1 for p in Pago.objects.filter(created_at__date=hoy) 
+                                 if getattr(p, 'estado_conciliacion', '') == 'SIN_MATCH')
+            
+            # Crear registro de conciliación
+            conciliacion = Conciliacion.objects.create(
+                fecha_conciliacion=hoy,
+                total_registros=total_pagos,
+                match_sistema=(pagos_ok / total_pagos * 100) if total_pagos > 0 else 0,
+                diferencias=(pagos_dif / total_pagos * 100) if total_pagos > 0 else 0,
+                sin_match=(pagos_sin_match / total_pagos * 100) if total_pagos > 0 else 0,
+                estado='CONCILIADO' if pagos_dif == 0 and pagos_sin_match == 0 else 'CON_DIFERENCIAS',
+                usuario=request.user
+            )
+            
+            messages.success(request, f'✅ Arqueo diario generado para {hoy.strftime("%d/%m/%Y")}')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al generar arqueo: {str(e)}')
+        
+        return redirect('conciliacion')
+    
+    return redirect('conciliacion')
+# VISTA PARA CONCILIAR PAGOS SELECCIONADOS
+@login_required(login_url='/accounts/login/')
+def conciliar_seleccionados(request):
+    if request.method == 'POST':
+        try:
+            # Obtener los IDs de los pagos seleccionados
+            pagos_ids = request.POST.get('pagos_ids', '')
+            if pagos_ids:
+                ids_lista = [int(id) for id in pagos_ids.split(',') if id.strip()]
+                
+                # Marcar los pagos como conciliados
+                pagos_conciliados = Pago.objects.filter(id__in=ids_lista)
+                for pago in pagos_conciliados:
+                    pago.estado_conciliacion = 'OK'
+                    pago.save()
+                
+                # Registrar en bitácora
+                try:
+                    tipo_accion, created = TipoAccion.objects.get_or_create(
+                        nombre='CONCILIAR_PAGOS',
+                        defaults={'estado_id': 1, 'tabla_sistema_id': 1}
+                    )
+                    tabla_sistema, created = TablaSistema.objects.get_or_create(
+                        nombre='Conciliacion',
+                        defaults={'descripcion': 'Proceso de conciliación', 'importancia': 1, 'estado_id': 1}
+                    )
+                    
+                    Bitacora.objects.create(
+                        tipo_accion=tipo_accion,
+                        tabla_sistema=tabla_sistema,
+                        observacion=f"Conciliados {len(ids_lista)} pagos: {', '.join([p.referencia for p in pagos_conciliados])}",
+                        usuario=request.user,
+                        registro_afectado=0
+                    )
+                except Exception as e:
+                    print(f"Error al registrar en bitácora: {e}")
+                
+                messages.success(request, f'✅ {len(ids_lista)} pagos conciliados exitosamente.')
+            else:
+                messages.warning(request, 'No se seleccionaron pagos para conciliar.')
+                
+        except Exception as e:
+            messages.error(request, f'❌ Error al conciliar pagos: {str(e)}')
+        
+        return redirect('conciliacion')
+    
+    return redirect('conciliacion')
+
+# VISTA PARA RESOLVER DIFERENCIAS
+@login_required(login_url='/accounts/login/')
+def resolver_diferencia(request):
+    if request.method == 'POST':
+        try:
+            referencia = request.POST.get('referencia')
+            accion = request.POST.get('accion')
+            comentario = request.POST.get('comentario', '')
+            
+            # Buscar el pago por referencia
+            pago = Pago.objects.filter(referencia=referencia).first()
+            
+            if pago:
+                if accion == 'ajustar_sistema':
+                    # Ajustar monto en sistema interno (aquí necesitarías lógica específica)
+                    pago.estado_conciliacion = 'OK'
+                    pago.save()
+                    mensaje = f"Ajustado monto en sistema para {referencia}"
+                    
+                elif accion == 'ajustar_externo':
+                    # Ajustar monto en reporte externo (simulación)
+                    pago.estado_conciliacion = 'OK'
+                    pago.save()
+                    mensaje = f"Ajustado monto en reporte externo para {referencia}"
+                    
+                elif accion == 'crear_incidencia':
+                    # Crear incidencia automáticamente
+                    ultima_incidencia = Incidencia.objects.order_by('-id').first()
+                    if ultima_incidencia:
+                        try:
+                            ultimo_numero = int(ultima_incidencia.numero_referencia.split('-')[1])
+                            nuevo_numero = f"#DIF-{ultimo_numero + 1:05d}"
+                        except (ValueError, IndexError):
+                            nuevo_numero = "#DIF-00001"
+                    else:
+                        nuevo_numero = "#DIF-00001"
+                    
+                    Incidencia.objects.create(
+                        numero_referencia=nuevo_numero,
+                        tipo_incidencia='DIF_MONTO',
+                        descripcion=f"Diferencia detectada en conciliación: {referencia}. {comentario}",
+                        justificacion=comentario,
+                        pago_relacionado=pago,
+                        usuario_asignado=request.user,
+                    )
+                    mensaje = f"Creada incidencia {nuevo_numero} para {referencia}"
+                    
+                elif accion == 'ignorar_diferencia':
+                    # Ignorar diferencia y marcar como conciliado
+                    pago.estado_conciliacion = 'OK'
+                    pago.save()
+                    mensaje = f"Diferencia ignorada para {referencia}"
+                
+                # Registrar en bitácora
+                try:
+                    tipo_accion, created = TipoAccion.objects.get_or_create(
+                        nombre='RESOLVER_DIFERENCIA',
+                        defaults={'estado_id': 1, 'tabla_sistema_id': 1}
+                    )
+                    tabla_sistema, created = TablaSistema.objects.get_or_create(
+                        nombre='Conciliacion',
+                        defaults={'descripcion': 'Proceso de conciliación', 'importancia': 1, 'estado_id': 1}
+                    )
+                    
+                    Bitacora.objects.create(
+                        tipo_accion=tipo_accion,
+                        tabla_sistema=tabla_sistema,
+                        observacion=f"{mensaje}. Acción: {accion}",
+                        usuario=request.user,
+                        registro_afectado=pago.id if pago else 0
+                    )
+                except Exception as e:
+                    print(f"Error al registrar en bitácora: {e}")
+                
+                messages.success(request, f'✅ {mensaje}')
+            else:
+                messages.error(request, f'❌ No se encontró el pago con referencia {referencia}')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al resolver diferencia: {str(e)}')
+        
+        return redirect('conciliacion')
+    
+    return redirect('conciliacion')
+
+# ACTUALIZA LA VISTA DE CONCILIACIÓN EXISTENTE
+@login_required(login_url='/accounts/login/')
+def conciliacion(request):
+    # Obtener parámetros del formulario
+    fecha_conciliacion = request.GET.get('fecha', '')
+    pasarela_filtro = request.GET.get('pasarela', 'MacroClick')
+    
+    # Consulta base para pagos del sistema
+    pagos_sistema = Pago.objects.all().order_by('-created_at')
+    
+    # Si hay fecha, filtrar por fecha
+    if fecha_conciliacion:
+        pagos_sistema = pagos_sistema.filter(created_at__date=fecha_conciliacion)
+    
+    # Simular datos externos (esto luego vendrá de archivos CSV)
+    datos_externos = [
+        {'referencia': '#P-00120', 'monto': 10000, 'origen': 'Tarjeta', 'estado': 'OK'},
+        {'referencia': '#P-00121', 'monto': 8000, 'origen': 'Tarjeta', 'estado': 'DIF'},
+        {'referencia': '', 'monto': '', 'origen': '', 'estado': 'SIN_MATCH'},
+    ]
+    
+    # Procesar matching y estados
+    for pago in pagos_sistema:
+        pago.estado_conciliacion = 'SIN_MATCH'  # Por defecto
+        pago.monto_externo = None
+        pago.match_externo = None
+        
+        for externo in datos_externos:
+            if externo['referencia'] == pago.referencia:
+                pago.match_externo = externo
+                if externo['monto'] == float(pago.monto):
+                    pago.estado_conciliacion = 'OK'
+                else:
+                    pago.estado_conciliacion = 'DIF'
+                    pago.monto_externo = externo['monto']
+                    pago.diferencia_monto = abs(float(pago.monto) - externo['monto'])
+                break
+    
+    # Calcular estadísticas mejoradas
+    total_pagos = pagos_sistema.count()
+    pagos_ok = sum(1 for p in pagos_sistema if getattr(p, 'estado_conciliacion', '') == 'OK')
+    pagos_dif = [p for p in pagos_sistema if getattr(p, 'estado_conciliacion', '') == 'DIF']
+    pagos_sin_match = [p for p in pagos_sistema if getattr(p, 'estado_conciliacion', '') == 'SIN_MATCH']
+    
+    # Calcular porcentajes
+    porcentaje_conciliado = (pagos_ok / total_pagos * 100) if total_pagos > 0 else 0
+    porcentaje_diferencias = (len(pagos_dif) / total_pagos * 100) if total_pagos > 0 else 0
+    porcentaje_sin_match = (len(pagos_sin_match) / total_pagos * 100) if total_pagos > 0 else 0
+    
+    # Calcular total conciliado
+    total_conciliado = sum(p.monto for p in pagos_sistema if getattr(p, 'estado_conciliacion', '') == 'OK')
+    
+    # Obtener incidencias activas recientes
+    incidencias_activas = Incidencia.objects.filter(
+        estado='ABIERTA'
+    ).order_by('-fecha_apertura')[:5]
+    
+    context = {
+        'pagos_sistema': pagos_sistema,
+        'datos_externos': datos_externos,
+        'total_pagos': total_pagos,
+        'pagos_ok': pagos_ok,
+        'pagos_dif': pagos_dif,
+        'pagos_sin_match': pagos_sin_match,
+        'porcentaje_conciliado': round(porcentaje_conciliado, 1),
+        'porcentaje_diferencias': round(porcentaje_diferencias, 1),
+        'porcentaje_sin_match': round(porcentaje_sin_match, 1),
+        'total_conciliado': total_conciliado,
+        'incidencias_activas': incidencias_activas,
+        'filtros': {
+            'fecha': fecha_conciliacion,
+            'pasarela': pasarela_filtro,
+        }
+    }
+    
+    return render(request, 'conciliacion.html', context)

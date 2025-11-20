@@ -1,60 +1,82 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- KPIs -->
-<div class="row g-3">
-  <div class="col-md-3">
-    <div class="card p-3 h-100">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <div class="text-muted">Incidencias abiertas</div>
-          <div class="fs-2 fw-bold">{{ incidencias_abiertas }}</div>
-          <small class="text-danger"><i class="bi bi-arrow-up-right"></i> +2 vs ayer</small>
+<!-- KPIs PRINCIPALES -->
+<div class="row mb-4">
+    <!-- PAGOS HOY -->
+    <div class="col-md-3">
+        <div class="card border-{% if total_pagos_hoy > 0 %}success{% else %}secondary{% endif %}">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted">Pagos hoy</h5>
+                <h2 class="card-text {% if total_pagos_hoy > 0 %}text-success{% else %}text-secondary{% endif %}">
+                    {{ total_pagos_hoy }}
+                </h2>
+                <small class="{% if diferencia_pagos > 0 %}text-success{% elif diferencia_pagos < 0 %}text-danger{% else %}text-muted{% endif %}">
+                    {% if diferencia_pagos > 0 %}↗ +{{ diferencia_pagos }} vs ayer
+                    {% elif diferencia_pagos < 0 %}↘ {{ diferencia_pagos }} vs ayer
+                    {% else %}– igual que ayer{% endif %}
+                </small>
+            </div>
         </div>
-        <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
-      </div>
     </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3 h-100">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <div class="text-muted">Firmas pendientes</div>
-          <div class="fs-2 fw-bold">{{ firmas_pendientes }}</div>
-          <small class="text-muted"><i class="bi bi-dash"></i> igual que ayer</small>
+
+    <!-- INCIDENCIAS ABIERTAS -->
+    <div class="col-md-3">
+        <div class="card border-{% if incidencias_abiertas > 0 %}warning{% else %}success{% endif %}">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted">Incidencias abiertas</h5>
+                <h2 class="card-text {% if incidencias_abiertas > 0 %}text-warning{% else %}text-success{% endif %}">
+                    {{ incidencias_abiertas }}
+                </h2>
+                <small class="{% if diferencia_incidencias > 0 %}text-danger{% elif diferencia_incidencias < 0 %}text-success{% else %}text-muted{% endif %}">
+                    {% if diferencia_incidencias > 0 %}↗ +{{ diferencia_incidencias }} vs ayer
+                    {% elif diferencia_incidencias < 0 %}↘ {{ diferencia_incidencias }} vs ayer
+                    {% else %}– igual que ayer{% endif %}
+                </small>
+            </div>
         </div>
-        <i class="bi bi-pen fs-1 text-info"></i>
-      </div>
     </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3 h-100">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <div class="text-muted">Último arqueo</div>
-          <div class="fs-2 fw-bold text-success">OK</div>
-          <small class="text-success"><i class="bi bi-check2"></i> conciliado</small>
+
+    <!-- FIRMAS PENDIENTES -->
+    <div class="col-md-3">
+        <div class="card border-{% if firmas_pendientes > 0 %}info{% else %}success{% endif %}">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted">Firmas pendientes</h5>
+                <h2 class="card-text {% if firmas_pendientes > 0 %}text-info{% else %}text-success{% endif %}">
+                    {{ firmas_pendientes }}
+                </h2>
+                <small class="{% if diferencia_firmas > 0 %}text-info{% elif diferencia_firmas < 0 %}text-success{% else %}text-muted{% endif %}">
+                    {% if diferencia_firmas > 0 %}↗ +{{ diferencia_firmas }} vs ayer
+                    {% elif diferencia_firmas < 0 %}↘ {{ diferencia_firmas }} vs ayer
+                    {% else %}– igual que ayer{% endif %}
+                </small>
+            </div>
         </div>
-        <i class="bi bi-check2-circle fs-1 text-success"></i>
-      </div>
     </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card p-3 h-100">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <div class="text-muted">Pagos hoy</div>
-          <div class="fs-2 fw-bold">{{ total_pagos_hoy }}</div>
-          <small class="text-success"><i class="bi bi-arrow-down-right"></i> -5% comisiones</small>
+
+    <!-- ÚLTIMO ARQUEO -->
+    <div class="col-md-3">
+        <div class="card border-{% if estado_arqueo == 'OK' %}success{% elif estado_arqueo == 'CON DIFERENCIAS' %}warning{% else %}secondary{% endif %}">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted">Último arqueo</h5>
+                <h2 class="card-text {% if estado_arqueo == 'OK' %}text-success{% elif estado_arqueo == 'CON DIFERENCIAS' %}text-warning{% else %}text-secondary{% endif %}">
+                    {{ estado_arqueo }}
+                </h2>
+                <small class="text-muted">
+                    {% if fecha_arqueo %}
+                        {{ fecha_arqueo|date:"d/m/Y" }}
+                    {% else %}
+                        Sin datos
+                    {% endif %}
+                </small>
+            </div>
         </div>
-        <i class="bi bi-cash-coin fs-1 text-primary"></i>
-      </div>
     </div>
-  </div>
 </div>
 
+<!-- ALERTAS Y PENDIENTES -->
 <div class="row g-3 mt-1">
-  <!-- Alertas y pendientes -->
+  <!-- Alertas recientes -->
   <div class="col-lg-7">
     <div class="card p-3 h-100">
       <div class="d-flex justify-content-between align-items-center">
@@ -83,6 +105,7 @@
     </div>
   </div>
 
+  <!-- Pendientes de firma -->
   <div class="col-lg-5">
     <div class="card p-3 h-100">
       <h6 class="mb-1">Pendientes de firma</h6>
@@ -105,7 +128,7 @@
   </div>
 </div>
 
-<!-- Estado de conciliación de hoy -->
+<!-- ESTADO DE CONCILIACIÓN DE HOY -->
 <div class="card p-3 mt-3">
   <div class="d-flex justify-content-between align-items-center">
     <h6 class="mb-0">Conciliación de hoy</h6>
@@ -114,27 +137,28 @@
   <hr class="my-2">
   <div class="row g-3">
     <div class="col-md-4">
-      <div class="small text-muted mb-1">Match Sistema vs Externo</div>
-      <div class="progress" role="progressbar" aria-label="match">
-        <div class="progress-bar bg-success" style="width: 82%">82%</div>
-      </div>
+        <div class="small text-muted mb-1">Match Sistema vs Externo</div>
+        <div class="progress" role="progressbar" aria-label="match">
+            <div class="progress-bar bg-success" style="width: {{ match_sistema }}%">{{ match_sistema }}%</div>
+        </div>
     </div>
+    
     <div class="col-md-4">
-      <div class="small text-muted mb-1">Diferencias (D2)</div>
-      <div class="progress" role="progressbar" aria-label="diferencias">
-        <div class="progress-bar bg-warning text-dark" style="width: 12%">12%</div>
-      </div>
+        <div class="small text-muted mb-1">Diferencias (D2)</div>
+        <div class="progress" role="progressbar" aria-label="diferencias">
+            <div class="progress-bar bg-warning text-dark" style="width: {{ diferencias_conciliacion }}%">{{ diferencias_conciliacion }}%</div>
+        </div>
     </div>
+    
     <div class="col-md-4">
-      <div class="small text-muted mb-1">Sin match</div>
-      <div class="progress" role="progressbar" aria-label="sin-match">
-        <div class="progress-bar bg-danger" style="width: 6%">6%</div>
-      </div>
+        <div class="small text-muted mb-1">Sin match</div>
+        <div class="progress" role="progressbar" aria-label="sin-match">
+            <div class="progress-bar bg-danger" style="width: {{ sin_match }}%">{{ sin_match }}%</div>
+        </div>
     </div>
-  </div>
 </div>
 
-<!-- Actividad reciente (mini bitácora) CORREGIDO -->
+<!-- ACTIVIDAD RECIENTE -->
 <div class="card p-3 mt-3">
   <div class="d-flex justify-content-between align-items-center">
     <h6 class="mb-0">Actividad reciente</h6>

@@ -26,6 +26,34 @@
     </div>
   </form>
   
+  <!-- Resumen de Conciliación -->
+  <div class="row mt-3">
+    <div class="col-md-3">
+      <div class="card bg-success text-white text-center p-2">
+        <h6 class="mb-0">{{ porcentaje_conciliado }}%</h6>
+        <small>Conciliados</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark text-center p-2">
+        <h6 class="mb-0">{{ porcentaje_diferencias }}%</h6>
+        <small>Con Diferencias</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white text-center p-2">
+        <h6 class="mb-0">{{ porcentaje_sin_match }}%</h6>
+        <small>Sin Match</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-primary text-white text-center p-2">
+        <h6 class="mb-0">${{ total_conciliado|default:"0" }}</h6>
+        <small>Total Conciliado</small>
+      </div>
+    </div>
+  </div>
+  
   <hr>
   
   <div class="row g-3">
@@ -34,41 +62,109 @@
       <div class="card p-2 h-100">
         <div class="d-flex justify-content-between align-items-center">
           <h6 class="mb-0">Sistema (interno)</h6>
-          <span class="badge text-bg-success">{{ pagos_ok }} OK</span>
+          <div>
+            <span class="badge text-bg-success">{{ pagos_ok }} OK</span>
+            <span class="badge text-bg-warning">{{ pagos_dif|length }} DIF</span>
+            <span class="badge text-bg-danger">{{ pagos_sin_match|length }} SIN MATCH</span>
+          </div>
         </div>
         <div class="table-responsive mt-2">
           <table class="table table-sm align-middle">
             <thead>
               <tr>
+                <th width="30">
+                  <input type="checkbox" id="select-all" class="form-check-input">
+                </th>
                 <th>Ref</th>
                 <th>Monto</th>
                 <th>Medio</th>
                 <th>Estado</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
               {% for pago in pagos_sistema %}
-              <tr>
-                <td>{{ pago.referencia }}</td>
-                <td>${{ pago.monto }}</td>
+              <tr class="pago-row 
+                {% if pago.estado_conciliacion == 'OK' %}table-success{% endif %}
+                {% if pago.estado_conciliacion == 'DIF' %}table-warning{% endif %}
+                {% if pago.estado_conciliacion == 'SIN_MATCH' %}table-danger{% endif %}"
+                data-referencia="{{ pago.referencia }}"
+                data-monto="{{ pago.monto }}"
+                data-estado="{{ pago.estado_conciliacion }}">
+                <td>
+                  <input type="checkbox" class="form-check-input pago-checkbox" 
+                         name="pagos_seleccionados" value="{{ pago.id }}"
+                         {% if pago.estado_conciliacion == 'OK' %}checked{% endif %}>
+                </td>
+                <td>
+                  {{ pago.referencia }}
+                  {% if pago.match_externo %}
+                  <br><small class="text-muted">Match: {{ pago.match_externo.referencia }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  ${{ pago.monto }}
+                  {% if pago.diferencia_monto %}
+                  <br><small class="text-danger">Dif: ${{ pago.diferencia_monto }}</small>
+                  {% endif %}
+                </td>
                 <td>{{ pago.metodo_pago }}</td>
                 <td>
                   {% if pago.estado_conciliacion == 'OK' %}
-                  <span class="badge text-bg-success">OK</span>
+                  <span class="badge text-bg-success">✓ CONCILIADO</span>
                   {% elif pago.estado_conciliacion == 'DIF' %}
-                  <span class="badge text-bg-warning">DIF</span>
+                  <span class="badge text-bg-warning">⚠ DIFERENCIA</span>
                   {% else %}
-                  <span class="badge text-bg-danger">SIN MATCH</span>
+                  <span class="badge text-bg-danger">✗ SIN MATCH</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if pago.estado_conciliacion == 'DIF' %}
+                  <button type="button" class="btn btn-outline-warning btn-sm" 
+                          data-bs-toggle="modal" data-bs-target="#modalResolverDiferencia"
+                          data-referencia="{{ pago.referencia }}"
+                          data-monto-sistema="{{ pago.monto }}"
+                          data-monto-externo="{{ pago.match_externo.monto }}">
+                    Resolver
+                  </button>
+                  {% elif pago.estado_conciliacion == 'SIN_MATCH' %}
+                  <button type="button" class="btn btn-outline-info btn-sm"
+                          data-bs-toggle="modal" data-bs-target="#modalAsignarMatch">
+                    Asignar
+                  </button>
                   {% endif %}
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="4" class="text-center text-muted">No hay pagos para conciliar</td>
+                <td colspan="6" class="text-center text-muted">No hay pagos para conciliar</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
+        </div>
+        
+        <!-- Acciones de Conciliación -->
+        <div class="d-flex justify-content-between align-items-center mt-3 p-2 bg-light rounded">
+          <div>
+            <span id="contador-seleccionados">0</span> pagos seleccionados
+          </div>
+          <div class="d-flex gap-2">
+            <form method="post" action="{% url 'conciliar_seleccionados' %}" id="form-conciliar">
+              {% csrf_token %}
+              <input type="hidden" name="pagos_ids" id="pagos-ids">
+              <button type="submit" class="btn btn-success btn-sm" id="btn-conciliar" disabled>
+                <i class="bi bi-check-circle"></i> Conciliar Seleccionados
+              </button>
+            </form>
+            
+            <form method="post" action="{% url 'generar_incidencias' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-warning btn-sm" {% if not pagos_dif and not pagos_sin_match %}disabled{% endif %}>
+                <i class="bi bi-exclamation-triangle"></i> Generar Incidencias
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -88,21 +184,29 @@
                 <th>Monto</th>
                 <th>Origen</th>
                 <th>Estado</th>
+                <th>Match</th>
               </tr>
             </thead>
             <tbody>
               {% for externo in datos_externos %}
-              <tr>
+              <tr class="{% if externo.estado == 'OK' %}table-success{% elif externo.estado == 'DIF' %}table-warning{% else %}table-secondary{% endif %}">
                 <td>{{ externo.referencia|default:"—" }}</td>
                 <td>{% if externo.monto %}${{ externo.monto }}{% else %}—{% endif %}</td>
                 <td>{{ externo.origen|default:"—" }}</td>
                 <td>
                   {% if externo.estado == 'OK' %}
-                  <span class="badge text-bg-success">OK</span>
+                  <span class="badge text-bg-success">CONCILIADO</span>
                   {% elif externo.estado == 'DIF' %}
-                  <span class="badge text-bg-warning">DIF</span>
+                  <span class="badge text-bg-warning">DIFERENCIA</span>
                   {% else %}
-                  <span class="badge text-bg-danger">SIN MATCH</span>
+                  <span class="badge text-bg-secondary">PENDIENTE</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if externo.match_interno %}
+                  <small class="text-success">{{ externo.match_interno.referencia }}</small>
+                  {% else %}
+                  <small class="text-muted">—</small>
                   {% endif %}
                 </td>
               </tr>
@@ -114,27 +218,25 @@
     </div>
   </div>
 
-  <div class="d-flex justify-content-between align-items-center mt-3">
-    <div>
-      <span class="badge bg-warning-subtle text-warning border me-2">DIF</span>
-      <small>
-        {% if pagos_dif or pagos_sin_match %}
-        Se detectaron diferencias. Genere incidencias.
-        {% else %}
-        No se detectaron diferencias.
-        {% endif %}
-      </small>
+  <!-- Incidencias Activas -->
+  {% if incidencias_activas %}
+  <div class="card mt-3 border-warning">
+    <div class="card-header bg-warning text-dark">
+      <h6 class="mb-0">Incidencias Activas</h6>
     </div>
-    <div class="d-flex gap-2">
-      <form method="post" action="{% url 'generar_incidencias' %}" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-outline-secondary btn-sm" {% if not pagos_dif and not pagos_sin_match %}disabled{% endif %}>
-          Generar incidencias
-        </button>
-      </form>
-      <button class="btn btn-success btn-sm">Generar Arqueo Diario</button>
+    <div class="card-body">
+      {% for incidencia in incidencias_activas %}
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <strong>{{ incidencia.referencia }}</strong> - Diferencia: ${{ incidencia.diferencia }}
+          <br><small class="text-muted">{{ incidencia.descripcion }}</small>
+        </div>
+        <a href="{{ incidencia.url }}" class="btn btn-sm btn-outline-primary">Resolver</a>
+      </div>
+      {% endfor %}
     </div>
   </div>
+  {% endif %}
 </div>
 
 <!-- Modal para subir archivo -->
@@ -158,4 +260,126 @@
     </div>
   </div>
 </div>
+
+<!-- Modal para resolver diferencias -->
+<div class="modal fade" id="modalResolverDiferencia" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Resolver Diferencia</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'resolver_diferencia' %}">
+          {% csrf_token %}
+          <input type="hidden" name="referencia" id="ref-diferencia">
+          <div class="mb-3">
+            <label class="form-label">Referencia: <strong id="ref-display"></strong></label>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Monto Sistema</label>
+              <input type="text" class="form-control" id="monto-sistema" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Monto Externo</label>
+              <input type="text" class="form-control" id="monto-externo" readonly>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Acción a tomar</label>
+            <select class="form-select" name="accion">
+              <option value="ajustar_sistema">Ajustar monto en sistema</option>
+              <option value="ajustar_externo">Ajustar monto externo</option>
+              <option value="crear_incidencia">Crear incidencia</option>
+              <option value="ignorar_diferencia">Ignorar diferencia</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Comentario</label>
+            <textarea class="form-control" name="comentario" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Aplicar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Funcionalidad de selección y conciliación
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAll = document.getElementById('select-all');
+  const checkboxes = document.querySelectorAll('.pago-checkbox');
+  const contador = document.getElementById('contador-seleccionados');
+  const btnConciliar = document.getElementById('btn-conciliar');
+  const formConciliar = document.getElementById('form-conciliar');
+  const pagosIds = document.getElementById('pagos-ids');
+  
+  // Seleccionar/deseleccionar todos
+  selectAll.addEventListener('change', function() {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = selectAll.checked;
+    });
+    actualizarContador();
+  });
+  
+  // Actualizar contador y estado del botón
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', actualizarContador);
+  });
+  
+  function actualizarContador() {
+    const seleccionados = document.querySelectorAll('.pago-checkbox:checked');
+    contador.textContent = seleccionados.length;
+    btnConciliar.disabled = seleccionados.length === 0;
+    
+    // Actualizar lista de IDs para el formulario
+    const ids = Array.from(seleccionados).map(cb => cb.value);
+    pagosIds.value = ids.join(',');
+  }
+  
+  // Modal para resolver diferencias
+  const modalResolver = document.getElementById('modalResolverDiferencia');
+  if (modalResolver) {
+    modalResolver.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const referencia = button.getAttribute('data-referencia');
+      const montoSistema = button.getAttribute('data-monto-sistema');
+      const montoExterno = button.getAttribute('data-monto-externo');
+      
+      document.getElementById('ref-diferencia').value = referencia;
+      document.getElementById('ref-display').textContent = referencia;
+      document.getElementById('monto-sistema').value = '$' + montoSistema;
+      document.getElementById('monto-externo').value = '$' + montoExterno;
+    });
+  }
+  
+  // Resaltar filas al seleccionar
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const fila = this.closest('tr');
+      if (this.checked) {
+        fila.classList.add('table-primary');
+      } else {
+        fila.classList.remove('table-primary');
+      }
+    });
+  });
+});
+</script>
+
+<style>
+.pago-row:hover {
+  background-color: #f8f9fa !important;
+}
+
+.table-primary {
+  background-color: #cfe2ff !important;
+}
+
+.badge {
+  font-size: 0.7em;
+}
+</style>
 {% endblock %}

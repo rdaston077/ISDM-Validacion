@@ -1,14 +1,12 @@
-# generar_datos_prueba.py
+# generar_datos_prueba.py - VERSIÓN COMPLETAMENTE CORREGIDA
 import os
 import sys
 import django
 from datetime import datetime, timedelta
 import random
 
-# Agregar el directorio del proyecto al path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 # Configurar Django
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
@@ -16,8 +14,21 @@ from django.utils import timezone
 from accounts.models import User
 from validacion.models import (
     Estado, TablaSistema, TipoAccion, 
-    Bitacora, Pago, Incidencia, Conciliacion
+    Bitacora, Pago, Incidencia, Conciliacion, AlertaAdmin
 )
+
+def limpiar_datos_existentes():
+    """Limpiar datos existentes para evitar duplicados"""
+    print("🧹 LIMPIANDO DATOS EXISTENTES...")
+    try:
+        Pago.objects.all().delete()
+        Incidencia.objects.all().delete()
+        AlertaAdmin.objects.all().delete()
+        Conciliacion.objects.all().delete()
+        Bitacora.objects.all().delete()
+        print("✅ Datos anteriores eliminados")
+    except Exception as e:
+        print(f"⚠️ Error limpiando datos: {e}")
 
 def crear_estados():
     print("Creando estados...")
@@ -43,6 +54,7 @@ def crear_tablas_sistema():
         ('Incidencias', 'Tabla de incidencias del sistema', 4),
         ('Usuarios', 'Tabla de usuarios del sistema', 3),
         ('Conciliaciones', 'Tabla de procesos de conciliacion', 4),
+        ('Alertas', 'Tabla de alertas administrativas', 4),
     ]
     
     for nombre, descripcion, importancia in tablas:
@@ -61,16 +73,17 @@ def crear_tipos_accion():
     estado_activo = Estado.objects.get(nombre='Activo')
     tabla_pagos = TablaSistema.objects.get(nombre='Pagos')
     tabla_incidencias = TablaSistema.objects.get(nombre='Incidencias')
+    tabla_alertas = TablaSistema.objects.get(nombre='Alertas')
     
     acciones = [
+        ('CREAR_PAGO', tabla_pagos),
         ('VALIDAR_PAGO', tabla_pagos),
         ('ANULAR_PAGO', tabla_pagos), 
-        ('ALERTA_DIF', tabla_pagos),
-        ('CREAR_PAGO', tabla_pagos),
         ('MODIFICAR_PAGO', tabla_pagos),
+        ('CONCILIAR_PAGO', tabla_pagos),
         ('CREAR_INCIDENCIA', tabla_incidencias),
         ('RESOLVER_INCIDENCIA', tabla_incidencias),
-        ('CONCILIAR_PAGO', tabla_pagos),
+        ('GENERAR_ALERTA', tabla_alertas),
     ]
     
     for accion, tabla in acciones:
@@ -95,44 +108,36 @@ def crear_usuarios():
     ]
     
     for username, email, nombre, is_staff in usuarios:
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                'email': email,
-                'first_name': nombre.split()[0],
-                'last_name': nombre.split()[1] if len(nombre.split()) > 1 else '',
-                'is_staff': is_staff,
-                'is_active': True
-            }
-        )
-        if created:
+        # Verificar si el usuario ya existe para evitar duplicados
+        if not User.objects.filter(username=username).exists():
+            user = User.objects.create(
+                username=username,
+                email=email,
+                first_name=nombre.split()[0],
+                last_name=nombre.split()[1] if len(nombre.split()) > 1 else '',
+                is_staff=is_staff,
+                is_active=True
+            )
             user.set_password('password123')
             user.save()
             print(f"👤 Usuario creado: {username}")
-    print(f"✅ Usuarios creados: {User.objects.count()}")
+        else:
+            print(f"👤 Usuario ya existe: {username}")
+    
+    print(f"✅ Usuarios listos: {User.objects.count()}")
 
 def crear_pagos():
     print("Creando pagos de prueba...")
     usuario_admin = User.objects.get(username='admin')
     usuario_mlopez = User.objects.get(username='mlopez')
     
-    # Valores de cuotas según tu información - MÁS ESTUDIANTES
+    # Valores de cuotas
     valores_cuotas = {
-        'ENERO': 98000,
-        'FEBRERO': 98000,
-        'MARZO': 106000,
-        'ABRIL': 106000, 
-        'MAYO': 106000,
-        'JUNIO': 106000,
-        'JULIO': 106000,
-        'AGOSTO': 106000,
-        'SEPTIEMBRE': 106000,
-        'OCTUBRE': 110000,
-        'NOVIEMBRE': 110000,
-        'DICIEMBRE': 110000,
+        'ENERO': 98000, 'FEBRERO': 98000, 'MARZO': 106000, 'ABRIL': 106000, 
+        'MAYO': 106000, 'JUNIO': 106000, 'JULIO': 106000, 'AGOSTO': 106000,
+        'SEPTIEMBRE': 106000, 'OCTUBRE': 110000, 'NOVIEMBRE': 110000, 'DICIEMBRE': 110000,
     }
     
-    # 10 ESTUDIANTES diferentes
     estudiantes = [
         'Juan Perez', 'Maria Gonzalez', 'Carlos Lopez', 
         'Ana Martinez', 'Pedro Rodriguez', 'Laura Fernandez',
@@ -149,64 +154,42 @@ def crear_pagos():
     for mes, monto in valores_cuotas.items():
         for estudiante in estudiantes:
             try:
-                # Crear variaciones realistas en los montos
+                # Crear variaciones realistas
                 monto_variado = monto
-                if random.random() > 0.8:  # 20% de pagos con diferencias
+                if random.random() > 0.8:
                     monto_variado = monto - random.randint(1000, 5000)
                 
-                # Fechas realistas
                 mes_numero = list(valores_cuotas.keys()).index(mes) + 1
                 fecha_pago = timezone.now().replace(
-                    year=2025, month=mes_numero, 
+                    year=2024, month=mes_numero, 
                     day=random.randint(1, 28), hour=12, minute=0, second=0, microsecond=0
                 )
                 
                 fecha_vencimiento = timezone.now().replace(
-                    year=2025, month=mes_numero, day=10, hour=0, minute=0, second=0, microsecond=0
+                    year=2024, month=mes_numero, day=10, hour=0, minute=0, second=0, microsecond=0
                 )
                 
-                # Estado variado
-                estado = random.choices(
-                    estados_pago, 
-                    weights=[0.2, 0.6, 0.15, 0.05]  # Más validados, menos rechazados
-                )[0]
+                estado = random.choices(estados_pago, weights=[0.2, 0.6, 0.15, 0.05])[0]
                 
-                Pago.objects.get_or_create(
+                # Usar create() en lugar de get_or_create para evitar duplicados
+                Pago.objects.create(
                     referencia=f"#P-{pago_id:05d}",
-                    defaults={
-                        'monto': monto_variado,
-                        'fecha_pago': fecha_pago,
-                        'fecha_vencimiento': fecha_vencimiento,
-                        'estado': estado,
-                        'estudiante_nombre': estudiante,
-                        'concepto': f'Cuota {mes} 2025',
-                        'metodo_pago': random.choice(metodos_pago),
-                        'comision_porcentaje': random.choice([0, 1.5, 2.0, 3.0]),
-                        'usuario_creacion': random.choice(usuarios_creacion),
-                    }
+                    monto=monto_variado,
+                    fecha_pago=fecha_pago,
+                    fecha_vencimiento=fecha_vencimiento,
+                    estado=estado,
+                    estudiante_nombre=estudiante,
+                    concepto=f'Cuota {mes} 2024',
+                    metodo_pago=random.choice(metodos_pago),
+                    comision_porcentaje=random.choice([0, 1.5, 2.0, 3.0]),
+                    usuario_creacion=random.choice(usuarios_creacion),
                 )
                 pagos_creados += 1
                 pago_id += 1
                 
-                # Crear algunos pagos duplicados/rechazados
-                if random.random() > 0.95:  # 5% de pagos duplicados
-                    Pago.objects.create(
-                        referencia=f"#P-{pago_id:05d}",
-                        monto=monto_variado,
-                        fecha_pago=fecha_pago + timedelta(days=1),
-                        fecha_vencimiento=fecha_vencimiento,
-                        estado='RECHAZADO',
-                        estudiante_nombre=estudiante,
-                        concepto=f'Cuota {mes} 2025 - DUPLICADO',
-                        metodo_pago=random.choice(metodos_pago),
-                        comision_porcentaje=0,
-                        usuario_creacion=random.choice(usuarios_creacion),
-                    )
-                    pago_id += 1
-                    pagos_creados += 1
-                
             except Exception as e:
                 print(f"❌ Error creando pago {pago_id}: {e}")
+                pago_id += 1  # Incrementar igual para evitar referencias duplicadas
                 continue
     
     print(f"✅ Pagos creados: {pagos_creados}")
@@ -220,237 +203,193 @@ def crear_incidencias():
     # Obtener pagos para relacionar
     pagos = list(Pago.objects.all())
     
-    tipos_incidencia = ['DIF_MONTO', 'SIN_MATCH', 'DUPLICADO', 'MONTO_ALTO', 'ANULACION', 'AJUSTE']
-    estados_incidencia = ['ABIERTA', 'PENDIENTE_FIRMA', 'CERRADA']
+    if not pagos:
+        print("❌ No hay pagos para crear incidencias")
+        return
     
-    incidencias = [
-        # Incidencias DIF_MONTO
-        {
-            'numero_referencia': 'DIF-001',
-            'tipo_incidencia': 'DIF_MONTO',
-            'estado': 'ABIERTA',
-            'descripcion': 'Diferencia de $2.200 en pago #P-00121 - MacroClick',
-            'monto_diferencia': 2200,
-            'pago_relacionado': next((p for p in pagos if p.referencia == '#P-00121'), None),
-            'usuario_asignado': usuario_mlopez
-        },
-        {
-            'numero_referencia': 'DIF-002', 
-            'tipo_incidencia': 'DIF_MONTO',
-            'estado': 'PENDIENTE_FIRMA',
-            'descripcion': 'Diferencia de $1.500 en pago #P-00135 - PagoFacil',
-            'monto_diferencia': 1500,
-            'pago_relacionado': next((p for p in pagos if p.referencia == '#P-00135'), None),
-            'usuario_asignado': usuario_jdiaz
-        },
-        
-        # Incidencias SIN_MATCH
-        {
-            'numero_referencia': 'SM-001',
-            'tipo_incidencia': 'SIN_MATCH',
-            'estado': 'ABIERTA', 
-            'descripcion': 'Transferencia sin match - Ref: TRF-789456',
-            'pago_relacionado': None,
-            'usuario_asignado': usuario_mlopez
-        },
-        {
-            'numero_referencia': 'SM-002',
-            'tipo_incidencia': 'SIN_MATCH',
-            'estado': 'ABIERTA',
-            'descripcion': 'Pago #P-00142 no aparece en extracto bancario',
-            'pago_relacionado': next((p for p in pagos if p.referencia == '#P-00142'), None),
-            'usuario_asignado': usuario_jdiaz
-        },
-        
-        # Incidencias DUPLICADO
-        {
-            'numero_referencia': 'DUP-001',
-            'tipo_incidencia': 'DUPLICADO', 
-            'estado': 'PENDIENTE_FIRMA',
-            'descripcion': 'Pago duplicado #P-00150 - Estudiante: Ana Martinez',
-            'pago_relacionado': next((p for p in pagos if p.referencia == '#P-00150'), None),
-            'usuario_asignado': usuario_admin
-        },
-        
-        # Incidencias ANULACION
-        {
-            'numero_referencia': 'ANU-001',
-            'tipo_incidencia': 'ANULACION',
-            'estado': 'PENDIENTE_FIRMA',
-            'descripcion': 'Anulacion solicitada - Pago #P-00128',
-            'pago_relacionado': next((p for p in pagos if p.referencia == '#P-00128'), None),
-            'usuario_asignado': usuario_admin
-        },
-        
-        # Incidencias MONTO_ALTO
-        {
-            'numero_referencia': 'MA-001',
-            'tipo_incidencia': 'MONTO_ALTO',
-            'estado': 'ABIERTA',
-            'descripcion': 'Monto superior al esperado en pago #P-00180',
-            'pago_relacionado': next((p for p in pagos if p.referencia == '#P-00180'), None),
-            'usuario_asignado': usuario_mlopez
-        }
-    ]
+    incidencias_creadas = 0
     
-    # Crear incidencias adicionales aleatorias
-    for i in range(15):  # 15 incidencias más
-        pago = random.choice(pagos) if pagos and random.random() > 0.3 else None
-        incidencias.append({
-            'numero_referencia': f'INC-{300 + i:03d}',
-            'tipo_incidencia': random.choice(tipos_incidencia),
-            'estado': random.choice(estados_incidencia),
-            'descripcion': f'Incidencia automatica {i+1} - {random.choice(["MacroClick", "PagoFacil", "Transferencia"])}',
-            'monto_diferencia': random.randint(500, 3000) if random.random() > 0.5 else None,
-            'pago_relacionado': pago,
-            'usuario_asignado': random.choice([usuario_admin, usuario_mlopez, usuario_jdiaz])
-        })
-    
-    for incidencia_data in incidencias:
+    # Crear incidencias basadas en pagos reales
+    for i in range(min(15, len(pagos))):
+        pago = pagos[i]
         try:
-            Incidencia.objects.get_or_create(
-                numero_referencia=incidencia_data['numero_referencia'],
-                defaults=incidencia_data
+            Incidencia.objects.create(
+                numero_referencia=f'DIF-{i+1:03d}',
+                tipo_incidencia='DIF_MONTO',
+                estado=random.choice(['ABIERTA', 'PENDIENTE_FIRMA']),
+                descripcion=f'Diferencia detectada en {pago.referencia} - {random.choice(["MacroClick", "PagoFacil"])}',
+                monto_diferencia=random.randint(500, 3000),
+                pago_relacionado=pago,
+                usuario_asignado=random.choice([usuario_mlopez, usuario_jdiaz])
             )
+            incidencias_creadas += 1
         except Exception as e:
-            print(f"❌ Error creando incidencia {incidencia_data['numero_referencia']}: {e}")
+            print(f"❌ Error creando incidencia DIF-{i+1:03d}: {e}")
     
-    print(f"✅ Incidencias creadas: {Incidencia.objects.count()}")
+    # Incidencias sin match
+    for i in range(5):
+        try:
+            Incidencia.objects.create(
+                numero_referencia=f'SM-{i+1:03d}',
+                tipo_incidencia='SIN_MATCH',
+                estado='ABIERTA',
+                descripcion=f'Transferencia sin match - Ref: TRF-{random.randint(100000, 999999)}',
+                usuario_asignado=usuario_mlopez
+            )
+            incidencias_creadas += 1
+        except Exception as e:
+            print(f"❌ Error creando incidencia SM-{i+1:03d}: {e}")
+    
+    print(f"✅ Incidencias creadas: {incidencias_creadas}")
 
 def crear_bitacora():
     print("Creando bitácora...")
-    tabla_pagos = TablaSistema.objects.get(nombre='Pagos')
-    tabla_incidencias = TablaSistema.objects.get(nombre='Incidencias')
-    
-    usuario_admin = User.objects.get(username='admin')
-    usuario_mlopez = User.objects.get(username='mlopez') 
-    usuario_jdiaz = User.objects.get(username='jdiaz')
-    usuario_sistema = User.objects.get(username='sistema')
-    
-    tipos_accion = {ta.nombre: ta for ta in TipoAccion.objects.all()}
-    pagos = list(Pago.objects.all()[:20])  # Primeros 20 pagos
-    incidencias = list(Incidencia.objects.all()[:10])  # Primeras 10 incidencias
-    
-    registros_bitacora = []
-    
-    # Registros de pagos
-    for pago in pagos:
-        registros_bitacora.extend([
-            {
-                'tipo_accion': tipos_accion['CREAR_PAGO'],
-                'tabla_sistema': tabla_pagos,
-                'observacion': f'Pago creado: {pago.referencia} - {pago.estudiante_nombre} - ${pago.monto}',
-                'usuario': pago.usuario_creacion,
-                'registro_afectado': pago.id,
-                'valores_nuevos': {
-                    'referencia': pago.referencia,
-                    'monto': str(pago.monto),
-                    'estudiante': pago.estudiante_nombre,
-                    'estado': pago.estado
-                },
-                'fecha_base': pago.created_at  # Usar la fecha del pago como base
-            }
-        ])
+    try:
+        tabla_pagos = TablaSistema.objects.get(nombre='Pagos')
+        tabla_incidencias = TablaSistema.objects.get(nombre='Incidencias')
+        tabla_alertas = TablaSistema.objects.get(nombre='Alertas')
         
-        if pago.estado == 'VALIDADO':
-            registros_bitacora.append({
-                'tipo_accion': tipos_accion['VALIDAR_PAGO'],
-                'tabla_sistema': tabla_pagos,
-                'observacion': f'Pago validado: {pago.referencia}',
-                'usuario': usuario_mlopez,
-                'registro_afectado': pago.id,
-                'valores_nuevos': {'estado': 'VALIDADO', 'usuario_validador': 'mlopez'},
-                'fecha_base': pago.created_at + timedelta(hours=1)  # 1 hora después
-            })
-    
-    # Registros de incidencias
-    for incidencia in incidencias:
-        registros_bitacora.append({
-            'tipo_accion': tipos_accion['CREAR_INCIDENCIA'],
-            'tabla_sistema': tabla_incidencias,
-            'observacion': f'Incidencias creada: {incidencia.numero_referencia} - {incidencia.tipo_incidencia}',
-            'usuario': usuario_sistema,
-            'registro_afectado': incidencia.id,
-            'valores_nuevos': {
-                'numero_referencia': incidencia.numero_referencia,
-                'tipo': incidencia.tipo_incidencia,
-                'estado': incidencia.estado
-            },
-            'fecha_base': incidencia.fecha_apertura
-        })
-    
-    # Registros de alertas del sistema
-    alertas = [
-        {
-            'tipo_accion': tipos_accion['ALERTA_DIF'],
-            'tabla_sistema': tabla_pagos,
-            'observacion': 'ALERTA: Diferencia detectada en conciliacion MacroClick - $2.200',
-            'usuario': usuario_sistema,
-            'registro_afectado': 0,
-            'valores_nuevos': {'alerta': 'DIF_MONTO', 'monto': '2200', 'origen': 'MacroClick'},
-            'fecha_base': timezone.now() - timedelta(days=1, hours=2)
-        },
-        {
-            'tipo_accion': tipos_accion['ALERTA_DIF'],
-            'tabla_sistema': tabla_pagos,
-            'observacion': 'ALERTA: Transferencia sin match - Ref: TRF-789456',
-            'usuario': usuario_sistema,
-            'registro_afectado': 0,
-            'valores_nuevos': {'alerta': 'SIN_MATCH', 'referencia': 'TRF-789456'},
-            'fecha_base': timezone.now() - timedelta(days=1, hours=1)
-        }
-    ]
-    registros_bitacora.extend(alertas)
-    
-    # Crear registros en bitácora
-    for bitacora_data in registros_bitacora:
-        try:
-            # ✅ CORRECCIÓN: Usar update() para establecer la fecha correcta
-            bitacora = Bitacora.objects.create(
-                tipo_accion=bitacora_data['tipo_accion'],
-                tabla_sistema=bitacora_data['tabla_sistema'],
-                observacion=bitacora_data['observacion'],
-                usuario=bitacora_data['usuario'],
-                registro_afectado=bitacora_data['registro_afectado'],
-                valores_nuevos=bitacora_data['valores_nuevos'],
-                estado=True
-            )
-            # ✅ Actualizar fecha usando update() para evitar que auto_now_add la sobreescriba
-            Bitacora.objects.filter(id=bitacora.id).update(fecha=bitacora_data['fecha_base'])
-            
-        except Exception as e:
-            print(f"❌ Error creando bitácora: {e}")
-    
-    print(f"✅ Registros bitácora creados: {Bitacora.objects.count()}")
+        usuario_admin = User.objects.get(username='admin')
+        usuario_mlopez = User.objects.get(username='mlopez')
+        usuario_sistema = User.objects.get(username='sistema')
+        
+        tipos_accion = {ta.nombre: ta for ta in TipoAccion.objects.all()}
+        pagos = list(Pago.objects.all()[:10])
+        incidencias = list(Incidencia.objects.all()[:5])
+        
+        bitacora_creada = 0
+        
+        # Registros de pagos
+        for pago in pagos:
+            try:
+                Bitacora.objects.create(
+                    tipo_accion=tipos_accion['CREAR_PAGO'],
+                    tabla_sistema=tabla_pagos,
+                    observacion=f'Pago creado: {pago.referencia}',
+                    usuario=pago.usuario_creacion,
+                    registro_afectado=pago.id,
+                    valores_nuevos={
+                        'referencia': pago.referencia,
+                        'monto': str(pago.monto),
+                        'estudiante': pago.estudiante_nombre
+                    },
+                    estado=True
+                )
+                bitacora_creada += 1
+            except Exception as e:
+                print(f"❌ Error creando bitácora pago: {e}")
+        
+        # Registros de incidencias
+        for incidencia in incidencias:
+            try:
+                Bitacora.objects.create(
+                    tipo_accion=tipos_accion['CREAR_INCIDENCIA'],
+                    tabla_sistema=tabla_incidencias,
+                    observacion=f'Incidencia creada: {incidencia.numero_referencia}',
+                    usuario=usuario_sistema,
+                    registro_afectado=incidencia.id,
+                    valores_nuevos={
+                        'numero_referencia': incidencia.numero_referencia,
+                        'tipo': incidencia.tipo_incidencia
+                    },
+                    estado=True
+                )
+                bitacora_creada += 1
+            except Exception as e:
+                print(f"❌ Error creando bitácora incidencia: {e}")
+        
+        print(f"✅ Bitácora creada: {bitacora_creada} registros")
+        
+    except Exception as e:
+        print(f"❌ Error en bitácora: {e}")
 
 def crear_conciliaciones():
     print("Creando conciliaciones...")
     usuario_admin = User.objects.get(username='admin')
+    conciliaciones_creadas = 0
     
-    # Crear conciliaciones de los últimos 7 días
     for i in range(7):
         fecha = timezone.now().date() - timedelta(days=i)
-        conciliacion, created = Conciliacion.objects.get_or_create(
-            fecha_conciliacion=fecha,
-            defaults={
-                'pasarela': random.choice(['MacroClick', 'PagoFacil', 'Banco Nacion']),
-                'estado': random.choice(['CONCILIADO', 'CON_DIFERENCIAS']),
-                'usuario_responsable': usuario_admin,
-                'match_sistema': random.randint(75, 95),
-                'diferencias': random.randint(3, 15),
-                'sin_match': random.randint(2, 10)
-            }
-        )
-        if created:
-            print(f"✅ Conciliación creada: {fecha}")
+        try:
+            Conciliacion.objects.create(
+                fecha_conciliacion=fecha,
+                pasarela=random.choice(['MacroClick', 'PagoFacil', 'Banco Nacion']),
+                estado=random.choice(['CONCILIADO', 'CON_DIFERENCIAS']),
+                usuario_responsable=usuario_admin,
+                match_sistema=random.randint(75, 95),
+                diferencias=random.randint(3, 15),
+                sin_match=random.randint(2, 10)
+            )
+            conciliaciones_creadas += 1
+        except Exception as e:
+            print(f"❌ Error creando conciliación: {e}")
     
-    print(f"✅ Conciliaciones creadas: {Conciliacion.objects.count()}")
+    print(f"✅ Conciliaciones creadas: {conciliaciones_creadas}")
 
-def main():
-    print("=== INICIANDO CREACIÓN DE DATOS DE PRUEBA MEJORADOS ===")
-    print("📊 Creando datos más realistas y variados...")
+def crear_alertas_admin():
+    print("Creando alertas administrativas...")
     
     try:
+        usuario_admin = User.objects.get(username='admin')
+        usuario_mlopez = User.objects.get(username='mlopez')
+        
+        tabla_pagos = TablaSistema.objects.get(nombre='Pagos')
+        tabla_conciliaciones = TablaSistema.objects.get(nombre='Conciliaciones')
+        
+        # Crear alertas directamente (evita problemas de collation)
+        alertas_data = [
+            {
+                'severidad': 'Critica',
+                'tabla_sistema': tabla_pagos,
+                'registro_afectado': 1,
+                'mensaje': 'ALERTA: Diferencia critica detectada',
+                'detalle': 'Pago con diferencia superior requiere atencion inmediata',
+                'usuario_asignado': usuario_admin,
+                'estado_gestion': False
+            },
+            {
+                'severidad': 'Warning',
+                'tabla_sistema': tabla_conciliaciones, 
+                'registro_afectado': 1,
+                'mensaje': 'ALERTA: Conciliacion con diferencias',
+                'detalle': 'Diferencias pendientes en ultima conciliacion',
+                'usuario_asignado': usuario_mlopez,
+                'estado_gestion': False
+            },
+            {
+                'severidad': 'Info',
+                'tabla_sistema': tabla_pagos,
+                'registro_afectado': 0,
+                'mensaje': 'ALERTA: Pagos pendientes de validacion',
+                'detalle': 'Pagos esperan validacion en el sistema',
+                'usuario_asignado': usuario_mlopez,
+                'estado_gestion': False
+            }
+        ]
+        
+        alertas_creadas = 0
+        for alerta_data in alertas_data:
+            try:
+                AlertaAdmin.objects.create(**alerta_data)
+                alertas_creadas += 1
+                print(f"✅ Alerta creada: {alerta_data['mensaje']}")
+            except Exception as e:
+                print(f"❌ Error creando alerta: {e}")
+        
+        print(f"✅ Alertas admin creadas: {alertas_creadas}")
+        
+    except Exception as e:
+        print(f"❌ Error en alertas admin: {e}")
+
+def main():
+    print("=== INICIANDO CREACIÓN DE DATOS DE PRUEBA COMPLETOS ===")
+    print("📊 Creando datos limpios y sin errores...")
+    
+    try:
+        # Limpiar datos existentes primero
+        limpiar_datos_existentes()
+        
+        # Crear todos los datos
         crear_estados()
         crear_tablas_sistema()
         crear_tipos_accion()
@@ -459,10 +398,11 @@ def main():
         crear_incidencias()
         crear_bitacora()
         crear_conciliaciones()
+        crear_alertas_admin()
         
-        print("\n" + "="*50)
+        print("\n" + "="*60)
         print("🎉 DATOS DE PRUEBA CREADOS EXITOSAMENTE")
-        print("="*50)
+        print("="*60)
         print(f"📋 Estados: {Estado.objects.count()}")
         print(f"🗃️ Tablas Sistema: {TablaSistema.objects.count()}")
         print(f"⚡ Tipos Acción: {TipoAccion.objects.count()}")
@@ -471,10 +411,11 @@ def main():
         print(f"⚠️ Incidencias: {Incidencia.objects.count()}")
         print(f"📝 Bitácora: {Bitacora.objects.count()}")
         print(f"🔄 Conciliaciones: {Conciliacion.objects.count()}")
-        print("\n¡Ahora puedes probar todas las funcionalidades!")
+        print(f"🚨 Alertas Admin: {AlertaAdmin.objects.count()}")
+        print("\n¡Sistema completamente poblado para pruebas!")
         
     except Exception as e:
-        print(f"❌ Error creando datos de prueba: {e}")
+        print(f"❌ Error creando datos: {e}")
         import traceback
         traceback.print_exc()
 
