@@ -15,8 +15,8 @@ urlpatterns = [
      path('conciliacion/subir-reporte/', views.subir_reporte_externo, name='subir_reporte_externo'),
     path('conciliacion/generar-incidencias/', views.generar_incidencias, name='generar_incidencias'),
     path('conciliacion/generar-arqueo/', views.generar_arqueo, name='generar_arqueo'),
-    path('conciliacion/conciliar-seleccionados/', views.conciliar_seleccionados, name='conciliar_seleccionados'),  # ✅ NUEVA
-    path('conciliacion/resolver-diferencia/', views.resolver_diferencia, name='resolver_diferencia'),  # ✅ NUEVA
+    path('conciliacion/conciliar-seleccionados/', views.conciliar_seleccionados, name='conciliar_seleccionados'),
+    path('conciliacion/resolver-diferencia/', views.resolver_diferencia, name='resolver_diferencia'),  
     
     # PAGOS
     path('pagos/', views.lista_pagos, name='lista_pagos'),

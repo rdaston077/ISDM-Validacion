@@ -1,4 +1,3 @@
-<!-- templates/validacion/detalle_pago.html -->
 {% extends "base.html" %}
 {% block content %}
 
@@ -495,21 +494,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicialize tooltips
+    
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     });
-}); // CIERRA EL addEventListener
+}); 
 </script>
 
 // Mostrar alerta si el pago está vencido
 {% if pago.fecha_vencimiento < now %}
 <script>
-    // Se insertará todo este bloque de script solo si la condición es verdadera
+    
     setTimeout(function() {
         const alert = document.createElement('div');
-        // ... (resto del código de la alerta)
+        
         document.querySelector('.row').insertBefore(alert, document.querySelector('.row').firstChild);
     }, 1000);
 </script>

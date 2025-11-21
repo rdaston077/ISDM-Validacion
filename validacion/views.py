@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db.models import Q
 from django.contrib.auth.models import User
-from accounts.models import User  # ← ESTA ES LA BUENA
+from accounts.models import User  
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
@@ -93,11 +93,11 @@ def bitacora(request):
             Q(tabla_sistema__nombre__icontains=texto_libre)
         )
     
-    # ✅ NUEVO: Formatear registros con fecha completa
+    # registros con fecha completa
     registros_formateados = []
     for bitacora in bitacoras:
         registros_formateados.append({
-            'fecha_hora': bitacora.fecha.strftime('%d/%m/%Y %H:%M:%S'),  # Fecha completa
+            'fecha_hora': bitacora.fecha.strftime('%d/%m/%Y %H:%M:%S'),
             'usuario': bitacora.usuario.username,
             'accion': bitacora.tipo_accion.nombre,
             'objeto': bitacora.tabla_sistema.nombre,
@@ -340,8 +340,7 @@ def conciliacion(request):
 def subir_reporte_externo(request):
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
-        # Aquí procesarías el archivo CSV y guardarías los datos
-        # Por ahora solo redirigimos
+       
         return redirect('conciliacion')
     return redirect('conciliacion')
 
@@ -405,7 +404,7 @@ def lista_pagos(request):
     paginator = Paginator(pagos, 20)
     page_obj = paginator.get_page(pagina)
     
-    # Estadísticas para las tarjetas (usar consulta filtrada)
+    # Estadísticas para las tarjetas (consulta filtrada)
     total_pagos = pagos.count()
     pagos_pagados = pagos.filter(estado='PAGADO').count()
     pagos_pendientes = pagos.filter(estado='PENDIENTE').count()
@@ -428,7 +427,7 @@ def lista_pagos(request):
     
     return render(request, 'lista_pagos.html', context)
 
-# NUEVA FUNCIÓN PARA AGREGAR PAGOS
+# AGREGAR PAGOS
 @login_required(login_url='/accounts/login/')
 def agregar_pago(request):
     if request.method == 'POST':
@@ -448,7 +447,7 @@ def agregar_pago(request):
             
             pago.save()
             
-            # Registrar en bitácora (si las tablas existen)
+            # Registrar en bitácora 
             try:
                 tipo_accion, created = TipoAccion.objects.get_or_create(
                     nombre='CREAR_PAGO',
@@ -481,7 +480,7 @@ def agregar_pago(request):
     else:
         form = PagoForm()
     
-    # ✅ CORREGIDO: Usar 'pago.html' en lugar de 'pagos_cuotas.html'
+    
     return render(request, 'pago.html', {'form': form})
 
 @login_required(login_url='/accounts/login/')
@@ -730,13 +729,13 @@ def detalle_pago(request, pago_id):
         'pago': pago,
         'incidencias_relacionadas': incidencias_relacionadas,
         'actividad_pago': actividad_pago,
-        'tipos_incidencia': tipos_incidencia,  # NUEVO: agregar esto
+        'tipos_incidencia': tipos_incidencia,
         'titulo': f'Detalle - {pago.referencia}',
         'now': timezone.now()
     }
     return render(request, 'detalle_pago.html', context)
 
-# VISTA PARA EDITAR PAGO - CORREGIDA
+# VISTA PARA EDITAR PAGO
 @login_required(login_url='/accounts/login/')
 def editar_pago(request, pago_id):
     """Vista para editar un pago existente"""
@@ -747,7 +746,7 @@ def editar_pago(request, pago_id):
         if form.is_valid():
             pago_editado = form.save(commit=False)
             
-            # Combinar fecha y hora (si tu form tiene campos separados)
+            # Combinar fecha y hora 
             if 'fecha_pago' in form.cleaned_data and 'hora_pago' in form.cleaned_data:
                 fecha_pago = form.cleaned_data['fecha_pago']
                 hora_pago = form.cleaned_data['hora_pago']
@@ -792,7 +791,7 @@ def editar_pago(request, pago_id):
         'pago': pago,
         'titulo': f'Editar - {pago.referencia}'
     }
-    # ✅ CORRECCIÓN: Usar la ruta correcta del template
+    
     return render(request, 'editar_pago.html', context)
 
 # VISTA PARA ELIMINAR PAGO (OPCIONAL)
@@ -1097,7 +1096,7 @@ def conciliacion(request):
     
     # Procesar matching y estados
     for pago in pagos_sistema:
-        pago.estado_conciliacion = 'SIN_MATCH'  # Por defecto
+        pago.estado_conciliacion = 'SIN_MATCH'  
         pago.monto_externo = None
         pago.match_externo = None
         
