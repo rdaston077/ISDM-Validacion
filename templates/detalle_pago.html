@@ -267,48 +267,11 @@
     </div>
 </div>
             
-            <!-- Botón para crear incidencia - siempre visible -->
-            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#crearIncidenciaModal">
-                <i class="bi bi-plus-circle me-1"></i>Crear Incidencia
-            </button>
-            
-            <!-- Botón para ver incidencias existentes -->
-            {% if incidencias_relacionadas %}
-            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#listaIncidencias">
-                <i class="bi bi-exclamation-triangle me-1"></i>
-                Ver {{ incidencias_relacionadas.count }} Incidencia(s)
-            </button>
-            {% endif %}
-            
-            <a href="{% url 'lista_pagos' %}" class="btn btn-secondary btn-sm">
-                <i class="bi bi-list-ul me-1"></i>Volver a Lista
-            </a>
-        </div>
         
-        <!-- Lista colapsable de incidencias -->
-        {% if incidencias_relacionadas %}
-        <div class="collapse mt-3" id="listaIncidencias">
-            <div class="card card-body">
-                <h6 class="mb-2">Incidencias Activas:</h6>
-                {% for incidencia in incidencias_relacionadas|slice:":3" %}
-                <div class="border-start border-warning border-3 ps-2 mb-2">
-                    <small class="fw-bold">{{ incidencia.titulo }}</small>
-                    <br>
-                    <small class="text-muted">{{ incidencia.descripcion|truncatewords:8 }}</small>
-                    <br>
-                    <span class="badge bg-{% if incidencia.estado == 'ABIERTA' %}warning{% elif incidencia.estado == 'EN_PROCESO' %}info{% else %}success{% endif %}">
-                        {{ incidencia.estado }}
-                    </span>
-                </div>
-                {% endfor %}
-                {% if incidencias_relacionadas.count > 3 %}
-                <small class="text-muted">+ {{ incidencias_relacionadas.count|add:"-3" }} más...</small>
-                {% endif %}
-            </div>
+            
         </div>
-        {% endif %}
     </div>
-</div>
+
         <!-- Resumen de Estados -->
         <div class="row mt-4">
             <div class="col-12">
@@ -332,7 +295,7 @@
                                 <div class="border rounded p-3">
                                     <h4 class="{% if pago.fecha_vencimiento < now %}text-danger{% else %}text-success{% endif %}">
                                         {% if pago.fecha_vencimiento < now %}
-                                            Vencido
+                                            VENCIDO
                                         {% else %}
                                             Vigente
                                         {% endif %}
@@ -431,30 +394,7 @@
         </div>
     </div>
 </div>
-                    
-                    <!-- Información del pago para contexto -->
-                    <div class="alert alert-info">
-                        <small>
-                            <strong>Información del pago relacionado:</strong><br>
-                            • Referencia: <strong>{{ pago.referencia }}</strong><br>
-                            • Estudiante: <strong>{{ pago.estudiante_nombre }}</strong><br>
-                            • Monto: <strong>${{ pago.monto|floatformat:2 }}</strong><br>
-                            • Estado: <strong>{{ pago.estado }}</strong>
-                        </small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle me-1"></i>Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="bi bi-plus-circle me-1"></i>Crear Incidencia
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+
 
 <style>
 .timeline-badge {
