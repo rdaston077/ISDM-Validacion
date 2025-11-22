@@ -70,9 +70,11 @@
                         <label for="estado" class="form-label">Estado</label>
                         <select class="form-select" id="estado" name="estado">
                             <option value="Todos">Todos los estados</option>
-                            <option value="PAGADO" {% if filtros.estado == 'PAGADO' %}selected{% endif %}>Pagado</option>
+                            <option value="VALIDADO" {% if filtros.estado == 'VALIDADO' %}selected{% endif %}>Validado</option>
                             <option value="PENDIENTE" {% if filtros.estado == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
-                            <option value="VENCIDO" {% if filtros.estado == 'VENCIDO' %}selected{% endif %}>Vencido</option>
+                            <option value="PROCESADO" {% if filtros.estado == 'PROCESADO' %}selected{% endif %}>Procesado</option>
+                            <option value="RECHAZADO" {% if filtros.estado == 'RECHAZADO' %}selected{% endif %}>Rechazado</option>
+                            <option value="ERROR" {% if filtros.estado == 'ERROR' %}selected{% endif %}>Error</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -153,19 +155,30 @@
                                 <td>{{ pago.fecha_pago|date:"d/m/Y H:i:s" }}</td>
                                 <td>{{ pago.concepto }}</td>
                                 <td>
-                                    <span class="badge bg-{% if pago.estado == 'PAGADO' %}success{% elif pago.estado == 'PENDIENTE' %}warning{% else %}danger{% endif %}">
-                                        {{ pago.estado }}
+                                    <span class="badge
+                                        {% if pago.estado == 'VALIDADO' %}
+                                            bg-success
+                                        {% elif pago.estado == 'PENDIENTE' %}
+                                            bg-warning text-dark
+                                        {% elif pago.estado == 'PROCESADO' %}
+                                            bg-info text-dark
+                                        {% elif pago.estado == 'RECHAZADO' or pago.estado == 'ERROR' %}
+                                            bg-danger
+                                        {% else %}
+                                            bg-secondary
+                                        {% endif %}
+                                    ">
+                                        {{ pago.get_estado_display }}
                                     </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted">{{ pago.metodo_pago }}</small>
+                                    <small class="text-muted">{{ pago.get_metodo_pago_display }}</small>
                                 </td>
                                 <td>
                                     <small class="text-muted">{{ pago.created_at|date:"d/m/Y H:i:s" }}</small>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        
                                         <a href="{% url 'detalle_pago' pago.id %}" class="btn btn-outline-primary" title="Ver detalles">
                                             <i class="bi bi-eye"></i>
                                         </a>
