@@ -2,10 +2,9 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 
 from .forms import UserRegisterForm, LoginForm
 from .models import User
@@ -19,28 +18,18 @@ class CustomLoginView(LoginView):
     def dispatch(self, request, *args, **kwargs):
         # Bloquear login si ya está logueado
         if request.user.is_authenticated:
-            # Redirigir al dashboard principal
-            return redirect('dashboard')
+            return redirect('/')  # O la URL que quieras
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        """Redirige al dashboard después del login"""
-        # Redirigir al dashboard principal (ambos roles van al mismo lugar)
-        return reverse_lazy('dashboard')  # ✅ Redirige al dashboard de validación
-    
-    def form_invalid(self, form):
-        """Mensaje personalizado cuando el login falla"""
-        return super().form_invalid(form)
+        user = self.request.user
+        if getattr(user, 'role', None) == User.ROLE_ADMIN:
+            return '/'
+        return '/'
 
 
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('accounts:login')
-    
-    def dispatch(self, request, *args, **kwargs):
-        """Mensaje de logout exitoso"""
-        if request.user.is_authenticated:
-            messages.success(request, 'Has cerrado sesión correctamente.')
-        return super().dispatch(request, *args, **kwargs)
 
 
 # ✅ RegisterView solo accesible por admin
@@ -56,26 +45,15 @@ class RegisterView(CreateView):
         # Si el form no define rol, le pone 'user' por defecto
         if 'role' not in form.cleaned_data:
             form.instance.role = User.ROLE_USER
-        messages.success(self.request, 'Usuario registrado exitosamente.')
         return super().form_valid(form)
 
 
-# ✅ Home de admin — requiere login y rol admin
-class AdminHomeView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+# ✅ Home de admin y usuario — ambas requieren login
+class AdminHomeView(LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
     template_name = 'accounts/admin_home.html'
-    
-    def test_func(self):
-        """Verificar que el usuario sea admin"""
-        return self.request.user.role == User.ROLE_ADMIN
-    
-    def handle_no_permission(self):
-        """Redirigir si no tiene permisos"""
-        messages.error(self.request, 'No tienes permisos para acceder a esta página.')
-        return redirect('accounts:user_home')
 
 
-# ✅ Home de usuario — requiere login
 class UserHomeView(LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
     template_name = 'accounts/user_home.html'
