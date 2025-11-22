@@ -65,9 +65,9 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'isdm_validacion',        # Nombre de la base de datos
+        'NAME': 'validacion',        # Nombre de la base de datos
         'USER': 'root',                   # Usuario de MySQL
-        'PASSWORD': '',                   # Contraseña (vacía por defecto en XAMPP)
+        'PASSWORD': 'matias2025',                   # Contraseña (vacía por defecto en XAMPP)
         'HOST': 'localhost',              # Servidor
         'PORT': '3306',                   # Puerto
         'OPTIONS': {
@@ -82,6 +82,10 @@ LANGUAGE_CODE = "es-ar"
 TIME_ZONE = "America/Argentina/Salta"
 USE_I18N = True
 USE_TZ = True
+
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
