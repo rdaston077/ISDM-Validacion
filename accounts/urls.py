@@ -1,13 +1,43 @@
 from django.urls import path
-from .views import CustomLoginView, CustomLogoutView, RegisterView, AdminHomeView, UserHomeView
+from django.contrib.auth import views as auth_views
+from . import views
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('login/', CustomLoginView.as_view(), name='login'),
-    path('logout/', CustomLogoutView.as_view(), name='logout'),
-    path('register/', RegisterView.as_view(), name='register'),
-    path('admin-home/', AdminHomeView.as_view(), name='admin_home'),
-    path('user-home/', UserHomeView.as_view(), name='user_home'),
-    path('after-login/', AdminHomeView.as_view(), name='after_login'),  # si usás LOGIN_REDIRECT_URL
+    # Login y Logout
+    path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('logout/', views.CustomLogoutView.as_view(), name='logout'),
+    
+    # Registro (solo para admins)
+    path('register/', views.RegisterView.as_view(), name='register'),
+    
+    # Home según rol
+    path('admin/', views.AdminHomeView.as_view(), name='admin_home'),
+    path('home/', views.UserHomeView.as_view(), name='user_home'),
+    
+    # Recuperación de contraseña
+    path('password-reset/', 
+         auth_views.PasswordResetView.as_view(
+             template_name='accounts/password_reset.html'
+         ), 
+         name='password_reset'),
+    
+    path('password-reset/done/', 
+         auth_views.PasswordResetDoneView.as_view(
+             template_name='accounts/password_reset_done.html'
+         ), 
+         name='password_reset_done'),
+    
+    path('password-reset-confirm/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='accounts/password_reset_confirm.html'
+         ), 
+         name='password_reset_confirm'),
+    
+    path('password-reset-complete/', 
+         auth_views.PasswordResetCompleteView.as_view(
+             template_name='accounts/password_reset_complete.html'
+         ), 
+         name='password_reset_complete'),
 ]
