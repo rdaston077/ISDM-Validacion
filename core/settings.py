@@ -83,6 +83,10 @@ TIME_ZONE = "America/Argentina/Salta"
 USE_I18N = True
 USE_TZ = True
 
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
 STATIC_URL = "static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 

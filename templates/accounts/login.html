@@ -1,32 +1,81 @@
 {% load static %}
-<!doctype html>
-<html lang="es"> <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Login</title>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ISDM</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
 <body>
+    <div class="login-container">
+        <!-- Sección izquierda con información -->
+        <div class="login-left">
+            <div class="login-content">
+                <h1>Instituto Superior del Milagro</h1>
+                <p class="subtitle">Administración y gestión de Validación y Trazabilidad del Instituto Superior del Milagro N°8207.</p>
+            </div>
+        </div>
 
-  <main class="container" style="max-width: 600px; margin-top: 2rem;">
-  
-    <h1>Login</h1>
-    <form method="post">
-      {% csrf_token %}
-      
-      {{ form.non_field_errors }}
-      
-      <div>
-        <label for="{{ form.username.id_for_label }}">Usuario</label>
-        {{ form.username }}
-      </div>
-      <div>
-        <label for="{{ form.password.id_for_label }}">Contraseña</label>
-        {{ form.password }}
-      </div>
-      
-      <button type="submit">Entrar</button>
-    </form>
+        <!-- Sección derecha con formulario -->
+        <div class="login-right">
+            <div class="login-form-container">
+                <!-- Logo -->
+                <div class="logo-container">
+                    <div class="logo-circle">
+                        <span class="logo-text">ISDM</span>
+                    </div>
+                    <p class="logo-subtitle">Ingreso al sistema</p>
+                </div>
 
-  </main> </body>
+                <!-- Mensajes de error -->
+                {% if form.errors %}
+                    <div class="alert alert-error">
+                        Usuario o contraseña incorrectos.
+                    </div>
+                {% endif %}
+
+                <!-- Formulario de login -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Errores del formulario -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-error">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        {{ form.username }}
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
+                        <span class="icon-user">👤</span>
+                        {% if form.username.errors %}
+                            <div class="field-error">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.password }}
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
+                        <span class="icon-lock">🔒</span>
+                        {% if form.password.errors %}
+                            <div class="field-error">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn-login">
+                        ➜ Acceder
+                    </button>
+
+                    
+                </form>
+
+                <div class="footer-info">
+                    <p>Alvarado 951, Salta Capital</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>
