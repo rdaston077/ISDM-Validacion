@@ -15,11 +15,17 @@ class CustomLoginView(LoginView):
     authentication_form = LoginForm
     template_name = 'accounts/login.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        # Bloquear login si ya está logueado
+        if request.user.is_authenticated:
+            return redirect('/')  # O la URL que quieras
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         user = self.request.user
         if getattr(user, 'role', None) == User.ROLE_ADMIN:
-            return '/'  # Si es admin, va al inicio
-        return '/'      # Si es usuario común, también por ahora
+            return '/'
+        return '/'
 
 
 class CustomLogoutView(LogoutView):
