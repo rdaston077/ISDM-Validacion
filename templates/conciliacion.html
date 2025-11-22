@@ -158,12 +158,7 @@
               </button>
             </form>
             
-            <form method="post" action="{% url 'generar_incidencias' %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-outline-warning btn-sm" {% if not pagos_dif and not pagos_sin_match %}disabled{% endif %}>
-                <i class="bi bi-exclamation-triangle"></i> Generar Incidencias
-              </button>
-            </form>
+            <!-- BOTÓN ELIMINADO: Generar Incidencias -->
           </div>
         </div>
       </div>
