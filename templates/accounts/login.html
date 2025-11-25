@@ -9,66 +9,68 @@
 </head>
 <body>
     <div class="login-container">
-        <!-- Sección izquierda con información -->
         <div class="login-left">
             <div class="login-content">
                 <h1>Instituto Superior del Milagro</h1>
-                <p class="subtitle">Administración y gestión de Validación y Trazabilidad del Instituto Superior del Milagro N°8207.</p>
+                <p class="subtitle">Sistema de Validación y Trazabilidad.</p>
             </div>
         </div>
 
-        <!-- Sección derecha con formulario -->
         <div class="login-right">
             <div class="login-form-container">
-                <!-- Logo -->
                 <div class="logo-container">
                     <div class="logo-circle">
                         <span class="logo-text">ISDM</span>
                     </div>
-                    <p class="logo-subtitle">Ingreso al sistema</p>
+                    <p class="logo-subtitle">Acceso Administrativo</p>
                 </div>
 
-                <!-- Mensajes de error -->
-                {% if form.errors %}
+                <div id="js-error-alert" class="alert alert-error" style="display: none;"></div>
+
+                {% if form.non_field_errors %}
                     <div class="alert alert-error">
+                        <span class="alert-icon">⚠️</span>
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                {% endif %}
+                
+                {% if form.errors and not form.non_field_errors %}
+                     <div class="alert alert-error">
+                        <span class="alert-icon">⚠️</span>
                         Usuario o contraseña incorrectos.
                     </div>
                 {% endif %}
 
-                <!-- Formulario de login -->
-                <form method="post">
+                <form method="post" id="loginForm" novalidate>
                     {% csrf_token %}
-                    
-                    <!-- Errores del formulario -->
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-error">
-                            {{ form.non_field_errors }}
-                        </div>
-                    {% endif %}
                     
                     <div class="form-group">
                         {{ form.username }}
-                        <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
+                        <label for="username" class="form-label">Usuario</label>
                         <span class="icon-user">👤</span>
-                        {% if form.username.errors %}
-                            <div class="field-error">{{ form.username.errors.0 }}</div>
-                        {% endif %}
+                        <small class="field-msg error-msg" id="msg-username"></small>
                     </div>
 
                     <div class="form-group">
                         {{ form.password }}
-                        <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
+                        <label for="password" class="form-label">Contraseña</label>
                         <span class="icon-lock">🔒</span>
-                        {% if form.password.errors %}
-                            <div class="field-error">{{ form.password.errors.0 }}</div>
-                        {% endif %}
+                        <small class="field-msg error-msg" id="msg-password"></small>
                     </div>
 
-                    <button type="submit" class="btn-login">
-                        ➜ Acceder
-                    </button>
+                    <div class="remember-me-container">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="remember_me">
+                            <span class="checkmark"></span>
+                            Recordar usuario
+                        </label>
+                    </div>
 
+                    <button type="submit" class="btn-login" id="btnLogin">
+                        ➜ Entrar
+                    </button>
                     
+                    <p id="lockout-msg" class="lockout-text" style="display: none;"></p>
                 </form>
 
                 <div class="footer-info">
@@ -77,5 +79,97 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const rememberCheckbox = document.getElementById('remember_me');
+            const btnLogin = document.getElementById('btnLogin');
+            const jsAlert = document.getElementById('js-error-alert');
+            const lockoutMsg = document.getElementById('lockout-msg');
+
+            const savedUser = localStorage.getItem('isdm_saved_user');
+            if (savedUser) {
+                usernameInput.value = savedUser;
+                rememberCheckbox.checked = true;
+                usernameInput.focus();
+                passwordInput.focus();
+                usernameInput.blur();
+                passwordInput.blur();
+            }
+
+            let failedAttempts = parseInt(localStorage.getItem('isdm_failed_attempts') || '0');
+            let lockoutTime = parseInt(localStorage.getItem('isdm_lockout_time') || '0');
+            
+            if (document.querySelector('.alert-error')) {
+                failedAttempts++;
+                localStorage.setItem('isdm_failed_attempts', failedAttempts);
+            }
+
+            function checkLockout() {
+                const now = new Date().getTime();
+                if (failedAttempts >= 3) {
+                    if (lockoutTime === 0 || now > lockoutTime) {
+                        if (lockoutTime === 0) {
+                            const newLockout = now + (20 * 1000);
+                            localStorage.setItem('isdm_lockout_time', newLockout);
+                            lockoutTime = newLockout;
+                        } else {
+                            failedAttempts = 0;
+                            lockoutTime = 0;
+                            localStorage.setItem('isdm_failed_attempts', '0');
+                            localStorage.setItem('isdm_lockout_time', '0');
+                            return;
+                        }
+                    }
+                    
+                    const remainingSeconds = Math.ceil((lockoutTime - now) / 1000);
+                    if (remainingSeconds > 0) {
+                        btnLogin.disabled = true;
+                        btnLogin.classList.add('btn-disabled');
+                        lockoutMsg.style.display = 'block';
+                        lockoutMsg.innerText = `Demasiados intentos. Espere ${remainingSeconds}s`;
+                        
+                        setTimeout(function() {
+                            location.reload();
+                        }, remainingSeconds * 1000);
+                    }
+                }
+            }
+            
+            checkLockout();
+
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                jsAlert.style.display = 'none';
+                document.getElementById('msg-username').innerText = '';
+                document.getElementById('msg-password').innerText = '';
+
+                if (!usernameInput.value.trim()) {
+                    document.getElementById('msg-username').innerText = 'El usuario es obligatorio';
+                    isValid = false;
+                }
+
+                if (!passwordInput.value.trim()) {
+                    document.getElementById('msg-password').innerText = 'La contraseña es obligatoria';
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    jsAlert.innerText = 'Por favor complete los campos requeridos.';
+                    jsAlert.style.display = 'block';
+                } else {
+                    if (rememberCheckbox.checked) {
+                        localStorage.setItem('isdm_saved_user', usernameInput.value);
+                    } else {
+                        localStorage.removeItem('isdm_saved_user');
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
