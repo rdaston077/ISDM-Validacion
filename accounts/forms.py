@@ -1,7 +1,9 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
+from django.contrib.auth import get_user_model
 from .models import User
 
+User = get_user_model()
 
 class UserRegisterForm(UserCreationForm):
     """
@@ -46,7 +48,6 @@ class UserRegisterForm(UserCreationForm):
             'placeholder': 'Confirmar contraseña'
         })
 
-
 class LoginForm(AuthenticationForm):
     """
     Formulario de login con estilos personalizados
@@ -75,3 +76,25 @@ class LoginForm(AuthenticationForm):
         'invalid_login': 'Usuario o contraseña incorrectos.',
         'inactive': 'Esta cuenta está inactiva.',
     }
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']  # usa first_name/last_name como 'nombre para mostrar'
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class':'form-control','placeholder':'Nombre visible'}),
+            'last_name': forms.TextInput(attrs={'class':'form-control','placeholder':'Apellido'}),
+            'email': forms.EmailInput(attrs={'class':'form-control','placeholder':'Correo'}),
+        }
+        labels = {
+            'first_name': 'Nombre para mostrar',
+            'last_name': 'Apellido',
+            'email': 'Email',
+        }
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        # si NO querés permitir cambiar email, comentar todo este método
+        if email and User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Este email ya está en uso.")
+        return email
+
