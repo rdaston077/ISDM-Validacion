@@ -1,24 +1,88 @@
-<!doctype html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-</head>
-<body>
-    <main class="container">
-        <article>
-            <h1>Registrarse</h1>
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit">Crear cuenta</button>
-            </form>
-            <footer>
-                <a href="{% url 'accounts:login' %}">Volver al login</a>
-            </footer>
-        </article>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+
+<div class="register-container">
+    <div class="register-card">
+
+        <h2 class="title">Crear nuevo usuario</h2>
+
+        <form method="post" id="registerForm" novalidate>
+            {% csrf_token %}
+
+            <!-- USUARIO -->
+            <div class="form-group">
+                <label for="id_username">Nombre de usuario *</label>
+                {{ form.username }}
+                <span class="error" id="error-username"></span>
+            </div>
+
+            <!-- EMAIL -->
+            <div class="form-group">
+                <label for="id_email">Email *</label>
+                {{ form.email }}
+                <span class="error" id="error-email"></span>
+            </div>
+
+            <!-- ROL -->
+            <div class="form-group">
+                <label for="id_role">Rol *</label>
+                {{ form.role }}
+            </div>
+
+            <!-- CONTRASEÑA 1 -->
+            <div class="form-group password-group">
+                <label for="id_password1">Contraseña *</label>
+
+                <div class="password-wrapper position-relative">
+                    {{ form.password1 }}
+                    <i class="toggle-password" data-target="id_password1"></i>
+                </div>
+
+                <div class="requisitos-password">
+                    <span>La contraseña debe contener:</span>
+                    <ul>
+                        <li id="req-length" class="invalid">Mínimo 8 caracteres</li>
+                        <li id="req-number" class="invalid">Al menos 1 número</li>
+                        <li id="req-uppercase" class="invalid">Al menos 1 mayúscula</li>
+                        <li id="req-symbol" class="invalid">Al menos 1 símbolo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- CONTRASEÑA 2 -->
+            <div class="form-group password-group">
+                <label for="id_password2">Confirmar contraseña *</label>
+
+                <div class="password-wrapper position-relative">
+                    {{ form.password2 }}
+                    <i class="toggle-password" data-target="id_password2"></i>
+                </div>
+
+                <span class="error" id="error-pass"></span>
+            </div>
+
+            <!-- TÉRMINOS -->
+            <div class="checkbox-row">
+                <input type="checkbox" id="terms">
+                <label for="terms">Acepto los términos y condiciones</label>
+            </div>
+
+            <!-- BOTÓN -->
+            <button type="submit" id="submitBtn" disabled>Registrar</button>
+        </form>
+
+        <div class="back-login">
+            <a href="{% url 'accounts:login' %}">Volver al inicio</a>
+        </div>
+
+    </div>
+</div>
+
+<script src="{% static 'js/register.js' %}"></script>
+
+{% endblock %}
+

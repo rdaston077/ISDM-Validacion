@@ -292,3 +292,4 @@ input:not(:placeholder-shown) + .form-label {
         font-size: 2rem;
     }
 }
+

@@ -1,0 +1,159 @@
+/* CONTENEDOR GENERAL (igual al diseño del login) */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+    background: #191A2C;
+}
+
+/* CARD */
+.register-card {
+    width: 420px;
+    background: #1F2033;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 35px;
+    color: #eaeaea;
+    box-shadow: 0px 0px 25px rgba(0,0,0,0.35);
+}
+
+/* TÍTULO */
+.title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    color: #fff;
+}
+
+/* LABELS */
+label {
+    margin-bottom: 6px;
+    color: #cfcfcf;
+    font-weight: 500;
+}
+
+/* GRUPOS DE INPUT */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-top: 18px;
+}
+
+/* INPUTS */
+input,
+select {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14);
+    padding: 12px;
+    border-radius: 8px;
+    color: #fff;
+    transition: 0.3s;
+}
+
+input:focus,
+select:focus {
+    border-color: #6a5acd;
+    background: rgba(255,255,255,0.12);
+    outline: none;
+}
+
+/* PASSWORD WRAPPER */
+.password-wrapper {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #bbb;
+    font-size: 1.2em;
+    user-select: none;
+}
+
+.toggle-password:hover {
+    color: #fff;
+}
+
+/* CHECKLIST CONTRASEÑA */
+.requisitos-password span {
+    color: #aaa;
+    font-size: 0.9em;
+}
+
+.requisitos-password li {
+    margin: 5px 0;
+    font-size: 0.85em;
+}
+
+.valid {
+    color: #4caf50 !important;
+    font-weight: 600;
+}
+
+.invalid {
+    color: #ff6b6b !important;
+    font-weight: 600;
+}
+
+/* ERRORES */
+.error {
+    color: #ff6b6b;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+/* CHECKBOX */
+.checkbox-row {
+    margin-top: 20px;
+    color: #ccc;
+}
+
+/* BOTÓN PRINCIPAL */
+button {
+    width: 100%;
+    background: linear-gradient(90deg, #5f5ad8, #837dff);
+    color: white;
+    margin-top: 25px;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:disabled {
+    background: #444;
+    cursor: not-allowed;
+}
+
+/* LINK VOLVER */
+.back-login {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.back-login a {
+    color: #aaa;
+    text-decoration: none;
+}
+
+.back-login a:hover {
+    color: #fff;
+}
+.toggle-password svg {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}

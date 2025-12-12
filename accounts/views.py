@@ -46,18 +46,30 @@ class CustomLogoutView(LogoutView):
 # ✅ RegisterView solo accesible por admin
 @method_decorator(login_required(login_url='/accounts/login/'), name='dispatch')
 @method_decorator(role_required(User.ROLE_ADMIN), name='dispatch')
-class RegisterView(CreateView):
+class RegisterView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Vista para registrar nuevos usuarios administrativos."""
+
     model = User
     form_class = UserRegisterForm
     template_name = 'accounts/register.html'
-    success_url = reverse_lazy('accounts:login')
+    success_url = reverse_lazy('accounts:admin_home')
+
+    login_url = '/accounts/login/'
+
+    def test_func(self):
+        """Solo los ADMIN pueden registrar usuarios."""
+        return self.request.user.role == User.ROLE_ADMIN
+
+    def handle_no_permission(self):
+        """Si no es admin, lo enviamos al home de usuario."""
+        messages.error(self.request, 'No tienes permisos para registrar usuarios.')
+        return redirect('accounts:user_home')
 
     def form_valid(self, form):
-        # Si el form no define rol, le pone 'user' por defecto
-        if 'role' not in form.cleaned_data:
-            form.instance.role = User.ROLE_USER
+        """Mensaje de éxito personalizado."""
         messages.success(self.request, 'Usuario registrado exitosamente.')
         return super().form_valid(form)
+
 
 
 # ✅ Home de admin — requiere login y rol admin
