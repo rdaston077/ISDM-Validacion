@@ -40,4 +40,10 @@ urlpatterns = [
              template_name='accounts/password_reset_complete.html'
          ), 
          name='password_reset_complete'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/editar/', views.ProfileEditView.as_view(), name='profile_edit'),
+    path('profile/cambiar-password/', views.CustomPasswordChangeView.as_view(), name='profile_password_change'),
+    path('profile/cambiar-password/done/', auth_views.PasswordChangeDoneView.as_view(
+             template_name='accounts/password_change_done.html'
+         ), name='password_change_done'),
 ]

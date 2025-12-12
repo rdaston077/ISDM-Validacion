@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Editar datos básicos</h2>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="mb-3">
+    <label class="form-label">{{ form.first_name.label }}</label>
+    {{ form.first_name }}
+    {{ form.first_name.errors }}
+  </div>
+  <div class="mb-3">
+    <label class="form-label">{{ form.last_name.label }}</label>
+    {{ form.last_name }}
+    {{ form.last_name.errors }}
+  </div>
+  <div class="mb-3">
+    <label class="form-label">{{ form.email.label }}</label>
+    {{ form.email }}
+    {{ form.email.errors }}
+  </div>
+
+  <button class="btn btn-primary" type="submit">Guardar cambios</button>
+  <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Volver</a>
+</form>
+{% endblock %}
